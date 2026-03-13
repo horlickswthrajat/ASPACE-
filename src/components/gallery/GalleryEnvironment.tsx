@@ -511,7 +511,7 @@ export default function GalleryEnvironment({
                                     <meshBasicMaterial color={roomType === 'neon_void' ? "#aa00ff" : "#e0f7fa"} />
                                 </mesh>
                                 {art ? (
-                                    <ArtworkFrame artwork={art} position={[0, 0, 0]} onFrameClick={onArtworkClick} roomType={roomType} />
+                                    <ArtworkFrame artwork={art} position={[0, 0, 0]} onFrameClick={onArtworkClick} />
                                 ) : (
                                     <group position={[0, 0, 0]}>
                                         <OrnateFrame />
@@ -525,7 +525,7 @@ export default function GalleryEnvironment({
                                     <meshBasicMaterial color={roomType === 'neon_void' ? "#00ffff" : "#e0f7fa"} />
                                 </mesh>
                                 {art ? (
-                                    <ArtworkFrame artwork={art} position={[0, 0, 0]} onFrameClick={onArtworkClick} roomType={roomType} />
+                                    <ArtworkFrame artwork={art} position={[0, 0, 0]} onFrameClick={onArtworkClick} />
                                 ) : (
                                     <group position={[0, 0, 0]}>
                                         <OrnateFrame />
