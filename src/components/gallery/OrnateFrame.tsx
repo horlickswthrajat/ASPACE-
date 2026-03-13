@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function OrnateFrame({ width = 2.8, height = 2.8, depth = 0.1, color = "#1a1a1a" }) {
     return (
