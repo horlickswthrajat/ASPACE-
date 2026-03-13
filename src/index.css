@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Cinzel:wght@400;700;900&family=Creepster&family=Inter:wght@400;600;900&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Press+Start+2P&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-cyan: #87f5f5;
+  --color-brand-magenta: #f042ff;
+  --color-brand-purple: #7226ff;
+  --color-brand-deep-blue: #160078;
+  --color-background-dark: #010030;
+  --color-text-light: #ffe5f1;
+}
+
+@layer base {
+  body {
+    background-color: theme('colors.background-dark');
+    color: theme('colors.text-light');
+    font-family: 'Playfair Display', serif;
+    overflow: hidden;
+    margin: 0;
+  }
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+@layer utilities {
+  .neumorphic-glass {
+    box-shadow:
+      -8px -8px 16px rgba(255, 255, 255, 0.4),
+      8px 8px 16px rgba(0, 0, 0, 0.08);
+    background-blend-mode: overlay;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .neumorphic-inset {
+    box-shadow:
+      inset 6px 6px 10px rgba(0, 0, 0, 0.06),
+      inset -6px -6px 10px rgba(255, 255, 255, 0.5);
+    background: transparent;
+  }
+}

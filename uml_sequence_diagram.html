@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UML Sequence Diagram</title>
+    <!-- Basic reset and UML grid background styling -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7f9fc;
+            
+            /* Classic UML Grid Background */
+            background-image: 
+                linear-gradient(#e1e4e8 1px, transparent 1px),
+                linear-gradient(90deg, #e1e4e8 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .diagram-container {
+            background: #ffffff;
+            padding: 40px 60px;
+            border: 2px solid #333;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        /* Center and format header */
+        h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2>System Architecture UML</h2>
+        <!-- Render simple UML Mermaid JS -->
+        <pre class="mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#ffffff', 'primaryTextColor': '#000000', 'primaryBorderColor': '#000000', 'lineColor': '#000000', 'noteBkgColor': '#fff5ad', 'noteTextColor': '#000000', 'noteBorderColor': '#000000' }}}%%
+        sequenceDiagram
+            autonumber
+            actor User
+            participant App as React Frontend
+            participant Auth as Firebase Auth
+            participant DB as Firestore DB
+
+            User->>App: Login / Sign Up
+            App->>Auth: Authenticate Credentials
+            Auth-->>App: Session Details
+            
+            note over User,DB: Dashboard Navigation
+            User->>App: View Home / Search / Artists
+            App->>DB: Fetch Collections (Real-time listener)
+            DB-->>App: Profiles & Messages
+            
+            note over User,DB: Create Gallery Space
+            User->>App: Submit 3D Room Details
+            App->>DB: Save Configuration 
+            DB-->>App: Return Assigned Gallery ID
+            
+            User->>App: Explore 3D Gallery Mode
+            App->>DB: Load Scene & Artworks Data
+        </pre>
+    </div>
+
+    <!-- Load Mermaid.js to render sequence diagram easily -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>
