@@ -6,7 +6,7 @@ import { useAppContext } from '../../context/AppContext';
 import type { Artwork } from '../../context/AppContext';
 import OrnateFrame from './OrnateFrame';
 
-export default function ArtworkFrame({ artwork, position, onFrameClick, roomType }: { artwork: Artwork, position: [number, number, number], onFrameClick: (artwork: Artwork) => void, roomType?: string }) {
+export default function ArtworkFrame({ artwork, position, onFrameClick }: { artwork: Artwork, position: [number, number, number], onFrameClick: (artwork: Artwork) => void }) {
     const { theme } = useAppContext();
     const [texture, tagTexture] = useLoader(TextureLoader, [artwork.url, '/name_tag_bg.png']);
     const [hovered, setHovered] = useState(false);
