@@ -13,6 +13,7 @@ import Background3D from './components/Background3D';
 import SplashScreen from './components/SplashScreen';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
+import { Analytics } from '@vercel/analytics/react';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -76,6 +77,7 @@ function App() {
     <AuthProvider>
       <AppProvider>
         <AppContent />
+        <Analytics />
       </AppProvider>
     </AuthProvider>
   );
