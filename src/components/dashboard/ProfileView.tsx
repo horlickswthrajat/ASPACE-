@@ -185,14 +185,14 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
                         You haven't created any 3D rooms yet.
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
                         {rooms.map((room) => {
                             const averageRating = room.ratingCount > 0 ? (room.ratingSum / room.ratingCount).toFixed(1) : 'New';
                             return (
                                 <motion.div
                                     key={room.id}
-                                    className="rounded-[2rem] overflow-hidden relative group shadow-sm border border-transparent transition-all flex flex-col h-64"
-                                    whileHover={{ scale: 1.03, y: -5, transition: { duration: 0.2 }, borderColor: theme.primary }}
+                                    className="rounded-2xl md:rounded-[2rem] overflow-hidden relative group shadow-sm border border-transparent transition-all flex flex-col h-56 md:h-64"
+                                    whileHover={window.innerWidth > 768 ? { scale: 1.03, y: -5, transition: { duration: 0.2 }, borderColor: theme.primary } : {}}
                                     style={{ backgroundColor: theme.surface }}
                                 >
                                     {/* Placeholder Room Graphic */}
@@ -203,16 +203,16 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
                                         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
                                         <h3 className="absolute bottom-3 left-5 right-5 text-white font-black text-xl truncate tracking-tight shadow-sm z-10">{room.name}</h3>
                                     </div>
-                                    <div className="p-5 flex flex-col flex-1">
-                                        <p className="text-sm font-medium line-clamp-2 flex-1" style={{ color: theme.text }}>{room.description || 'Step inside to explore this curated 3D collection.'}</p>
+                                    <div className="p-3 md:p-5 flex flex-col flex-1">
+                                        <p className="text-[10px] md:text-sm font-medium line-clamp-2 flex-1" style={{ color: theme.text }}>{room.description || 'Step inside to explore this curated 3D collection.'}</p>
                                         <div className="flex justify-between items-center mt-4">
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => navigate(`/gallery/${room.id}`)}
-                                                    className="text-xs font-bold px-4 py-2 rounded-full transition-colors"
+                                                    className="text-[10px] md:text-xs font-bold px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-colors"
                                                     style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                                                 >
-                                                    Enter Room
+                                                    Enter
                                                 </button>
                                                 <button
                                                     onClick={() => setEditingRoom(room)}

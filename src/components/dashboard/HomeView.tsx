@@ -145,7 +145,7 @@ export default function HomeView({ containerVariants, itemVariants }: { containe
             </div>
 
             <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto"
+                className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 max-w-7xl mx-auto"
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
@@ -157,8 +157,8 @@ export default function HomeView({ containerVariants, itemVariants }: { containe
                         <motion.div
                             key={room.id}
                             variants={itemVariants}
-                            whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-                            className="rounded-[2.5rem] overflow-hidden relative group transition-all flex flex-col h-72 neumorphic-glass"
+                            whileHover={window.innerWidth > 768 ? { y: -5, scale: 1.02, transition: { duration: 0.2 } } : {}}
+                            className="rounded-2xl md:rounded-[2.5rem] overflow-hidden relative group transition-all flex flex-col h-60 md:h-72 neumorphic-glass"
                             style={{ backgroundColor: theme.surface, color: theme.text }}
                         >
                             {/* Visual Thumbnail graphic */}
@@ -168,40 +168,40 @@ export default function HomeView({ containerVariants, itemVariants }: { containe
                                 )}
                                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
 
-                                <h3 className="text-white font-black text-2xl tracking-tight z-10 leading-tight drop-shadow-md line-clamp-2">
+                                <h3 className="text-white font-black text-lg md:text-2xl tracking-tight z-10 leading-tight drop-shadow-md line-clamp-2">
                                     {room.name}
                                 </h3>
 
-                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm transform group-hover:scale-110 transition-transform">
-                                    <Star size={14} className="fill-[#fcaab8] text-[#fcaab8]" />
-                                    <span className="text-xs font-black text-gray-800">{averageRating}</span>
+                                <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-white/90 backdrop-blur-sm px-2 md:px-3 py-1 md:py-1.5 rounded-full flex items-center gap-1 md:gap-1.5 shadow-sm transform group-hover:scale-110 transition-transform">
+                                    <Star size={12} className="fill-[#fcaab8] text-[#fcaab8]" />
+                                    <span className="text-[10px] md:text-xs font-black text-gray-800">{averageRating}</span>
                                 </div>
                             </div>
 
-                            <div className="p-6 flex flex-col flex-1 transform transition-transform">
-                                <p className="text-sm font-medium line-clamp-2 flex-1 leading-snug" style={{ color: theme.text, opacity: 0.8 }}>
+                            <div className="p-3 md:p-6 flex flex-col flex-1 transform transition-transform">
+                                <p className="text-[10px] md:text-sm font-medium line-clamp-2 flex-1 leading-snug" style={{ color: theme.text, opacity: 0.8 }}>
                                     {room.description || 'Step inside to explore this curated 3D collection.'}
                                 </p>
 
-                                <div className="flex justify-between items-center mt-4 border-t border-gray-100 pt-4">
+                                <div className="flex justify-between items-center mt-2 md:mt-4 border-t border-gray-100 pt-2 md:pt-4">
                                     <div
-                                        className="flex items-center gap-2 cursor-pointer group/creator"
+                                        className="flex items-center gap-1 md:gap-2 cursor-pointer group/creator"
                                         onClick={(e) => { e.stopPropagation(); navigate(`/profile/${room.userId}`); }}
                                     >
                                         <img
                                             src={userProfiles[room.userId]?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.userId}`}
                                             alt="Creator"
-                                            className="w-10 h-10 rounded-full bg-gray-100 object-cover border-2 border-transparent group-hover/creator:border-[#fcaab8] transition-all hover:scale-110"
+                                            className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 object-cover border-2 border-transparent group-hover/creator:border-[#fcaab8] transition-all hover:scale-110"
                                             title={userProfiles[room.userId]?.displayName || 'Creator'}
                                         />
                                     </div>
 
                                     <button
                                         onClick={() => navigate(`/gallery/${room.id}`)}
-                                        className="text-xs font-bold px-4 py-1.5 rounded-full transition-colors shadow-sm"
+                                        className="text-[10px] md:text-xs font-bold px-3 md:px-4 py-1 md:py-1.5 rounded-full transition-colors shadow-sm"
                                         style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                                     >
-                                        Enter Room
+                                        Enter
                                     </button>
                                 </div>
                             </div>

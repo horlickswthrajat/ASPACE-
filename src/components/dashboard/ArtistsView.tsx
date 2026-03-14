@@ -186,7 +186,7 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 p-2 md:p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6 p-1 md:p-4">
                     {artists.filter(artist => {
                         if (selectedCategory === 'All') return true;
                         return artist.artStyles?.includes(selectedCategory);
@@ -194,14 +194,14 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                         <motion.div
                             key={artist.uid}
                             variants={itemVariants}
-                            whileHover={{ y: -8, scale: 1.02 }}
-                            className="rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all border backdrop-blur-xl flex flex-col items-center text-center cursor-pointer group"
+                            whileHover={window.innerWidth > 768 ? { y: -8, scale: 1.02 } : {}}
+                            className="rounded-2xl md:rounded-[2rem] p-3 md:p-6 shadow-sm hover:shadow-xl transition-all border flex flex-col items-center text-center cursor-pointer group relative overflow-hidden"
                             style={{ backgroundColor: theme.surface, borderColor: theme.border }}
                         >
                             {/* Avatar Container */}
-                            <div className="relative mb-5">
+                            <div className="relative mb-3 md:mb-5">
                                 <div
-                                    className="w-28 h-28 rounded-full flex items-center justify-center bg-gray-100 shadow-inner overflow-hidden border-4 z-10 relative group-hover:border-transparent transition-colors duration-300"
+                                    className="w-16 h-16 md:w-28 md:h-28 rounded-full flex items-center justify-center bg-gray-100 shadow-inner overflow-hidden border-2 md:border-4 z-10 relative group-hover:border-transparent transition-colors duration-300"
                                     style={{ backgroundColor: `${theme.primary}20`, borderColor: theme.border }}
                                 >
                                     <img
@@ -217,30 +217,30 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                                 />
                             </div>
 
-                            <h3 className="text-xl font-bold tracking-tight mb-1 truncate w-full px-2" style={{ color: theme.text }}>
+                            <h3 className="text-sm md:text-xl font-bold tracking-tight mb-0.5 md:mb-1 truncate w-full px-1" style={{ color: theme.text }}>
                                 {artist.displayName || 'Anonymous Artist'}
                             </h3>
 
-                            <p className="text-sm font-semibold opacity-60 line-clamp-2 mb-4 h-10 px-2" style={{ color: theme.text }}>
+                            <p className="text-[10px] md:text-sm font-semibold opacity-60 line-clamp-2 mb-2 md:mb-4 h-8 md:h-10 px-1" style={{ color: theme.text }}>
                                 {artist.bio || "No bio provided yet."}
                             </p>
 
-                            <div className="flex justify-center items-center mt-auto w-full pt-4 border-t border-gray-100/50">
+                            <div className="flex justify-center items-center mt-auto w-full pt-2 md:pt-4 border-t border-gray-100/50 mb-14 md:mb-0">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-lg font-black tracking-tight" style={{ color: theme.text }}>
+                                    <span className="text-sm md:text-lg font-black tracking-tight" style={{ color: theme.text }}>
                                         {artist.partnersCount || 0}
                                     </span>
-                                    <span className="text-xs font-bold opacity-50 uppercase tracking-wider" style={{ color: theme.text }}>
+                                    <span className="text-[8px] md:text-xs font-bold opacity-50 uppercase tracking-wider" style={{ color: theme.text }}>
                                         Partners
                                     </span>
                                 </div>
                             </div>
 
                             {/* Action Buttons (Visible on mobile, Hover on desktop) */}
-                            <div className="absolute inset-x-4 bottom-4 opacity-100 md:opacity-0 group-hover:opacity-100 translate-y-0 md:translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex flex-col gap-2">
+                            <div className="absolute inset-x-2 md:inset-x-4 bottom-2 md:bottom-4 opacity-100 md:opacity-0 group-hover:opacity-100 translate-y-0 md:translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex flex-col gap-1 md:gap-2">
                                 <button
                                     onClick={() => onArtistClick(artist.uid)}
-                                    className="w-full py-2.5 rounded-xl font-bold shadow-lg transition-transform hover:scale-105"
+                                    className="w-full py-1.5 md:py-2.5 rounded-lg md:rounded-xl text-[10px] md:text-sm font-bold shadow-md transition-transform hover:scale-105"
                                     style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                                 >
                                     View Profile
@@ -252,10 +252,10 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                                             <button
                                                 onClick={(e) => handleRequestPartner(artist.uid, e)}
                                                 disabled={actingUserId === artist.uid}
-                                                className="w-full py-2.5 font-bold shadow-sm transition-colors text-white outline-none active:scale-95 flex items-center justify-center gap-2"
+                                                className="w-full py-1.5 md:py-2.5 text-[10px] md:text-sm font-bold shadow-sm transition-colors text-white outline-none active:scale-95 flex items-center justify-center gap-1 md:gap-2"
                                                 style={{ backgroundColor: '#2dd4bf' }} // Teal-ish color for differentiation
                                             >
-                                                {actingUserId === artist.uid ? <Loader2 size={16} className="animate-spin" /> : 'Request Partner'}
+                                                {actingUserId === artist.uid ? <Loader2 size={12} className="animate-spin" /> : 'Partner'}
                                             </button>
                                         )}
                                         {partnerships[artist.uid] === 'pending_sent' && (

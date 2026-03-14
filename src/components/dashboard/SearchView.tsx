@@ -108,7 +108,7 @@ export default function SearchView({ containerVariants, itemVariants, searchQuer
                             No users found matching "{searchQuery}"
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {searchResults.map((user) => (
                                 <motion.div
                                     key={user.uid}
@@ -116,20 +116,20 @@ export default function SearchView({ containerVariants, itemVariants, searchQuer
                                         addRecentSearch(searchQuery);
                                         onUserSelect(user.uid);
                                     }}
-                                    className="flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all hover:scale-105 border shadow-sm"
+                                    className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-2xl cursor-pointer transition-all hover:scale-105 border shadow-sm text-center sm:text-left"
                                     style={{ backgroundColor: theme.surface, borderColor: theme.border }}
-                                    whileTap={{ scale: 0.95 }}
+                                    whileTap={{ scale: 0.98 }}
                                 >
-                                    <div className="w-12 h-12 rounded-full overflow-hidden border bg-gray-100" style={{ borderColor: theme.border }}>
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border bg-gray-100 flex-shrink-0" style={{ borderColor: theme.border }}>
                                         {user.photoURL ? (
                                             <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
                                         ) : (
-                                            <User size={24} className="m-auto mt-3 opacity-50" />
+                                            <User size={20} className="m-auto mt-2 opacity-50" />
                                         )}
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-lg truncate" style={{ color: theme.text }}>{user.displayName || 'Anonymous'}</h3>
-                                        <p className="text-sm opacity-70 truncate font-medium" style={{ color: theme.text }}>
+                                    <div className="flex-1 min-w-0 w-full">
+                                        <h3 className="font-bold text-sm sm:text-lg truncate" style={{ color: theme.text }}>{user.displayName || 'Anonymous'}</h3>
+                                        <p className="text-[10px] sm:text-sm opacity-70 truncate font-medium" style={{ color: theme.text }}>
                                             @{user.username || 'unknown'}
                                         </p>
                                     </div>

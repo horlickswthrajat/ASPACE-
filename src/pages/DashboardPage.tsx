@@ -248,8 +248,8 @@ export default function DashboardPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.3, type: "spring", bounce: 0.5 }}
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center cursor-pointer hover:scale-110 transition-all neumorphic-glass"
-                        style={{ backgroundColor: theme.primary }}
+                        className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center cursor-pointer hover:scale-110 transition-all neumorphic-glass border-2"
+                        style={{ backgroundColor: theme.primary, borderColor: theme.border }}
                     >
                         <img src={profile.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'} alt="User Profile" className="w-full h-full object-cover" />
                     </motion.div>
@@ -319,44 +319,36 @@ export default function DashboardPage() {
                         { icon: Home, label: 'Home' },
                         { icon: Search, label: 'Search' },
                         { icon: Users, label: 'Artists' },
-                        { icon: LayoutGrid, label: 'Builder' },
-                        { icon: User, label: 'Profile' }
+                        { icon: Mail, label: 'Messages' },
+                        { icon: User, label: 'Profile' },
+                        { icon: Settings, label: 'Settings' }
                     ].map((item, index) => {
                         const isActive = activeTab === item.label;
                         return (
                             <button
                                 key={index}
-                                onClick={() => setActiveTab(item.label)}
+                                onClick={() => {
+                                    if (item.label === 'Settings') {
+                                        setIsSettingsModalOpen(true);
+                                    } else {
+                                        setActiveTab(item.label);
+                                    }
+                                }}
                                 className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'scale-110' : 'opacity-60'}`}
                                 style={{ color: isActive ? theme.primary : theme.text }}
                             >
                                 <div className="relative">
-                                    <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                                    {((item.label === 'Notifications' && unreadNotificationsCount > 0) || (item.label === 'Messages' && unreadMessagesCount > 0)) && (
+                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                    {item.label === 'Messages' && unreadMessagesCount > 0 && (
                                         <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
-                                            {item.label === 'Notifications' ? unreadNotificationsCount : unreadMessagesCount}
+                                            {unreadMessagesCount > 20 ? '20+' : unreadMessagesCount}
                                         </div>
                                     )}
                                 </div>
-                                <span className="text-[10px] font-bold">{item.label}</span>
+                                <span className="text-[9px] font-bold">{item.label}</span>
                             </button>
                         );
                     })}
-                    <button
-                        onClick={() => setIsNotificationsOpen(true)}
-                        className={`flex flex-col items-center gap-1 opacity-60`}
-                        style={{ color: theme.text }}
-                    >
-                        <div className="relative">
-                            <Bell size={24} />
-                            {unreadNotificationsCount > 0 && (
-                                <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
-                                    {unreadNotificationsCount > 20 ? '20+' : unreadNotificationsCount}
-                                </div>
-                            )}
-                        </div>
-                        <span className="text-[10px] font-bold">Alerts</span>
-                    </button>
                 </nav>
             </main>
 
