@@ -7,6 +7,7 @@ import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs, del
 import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
 import ImageEditorModal from './ImageEditorModal';
+import { getCloudinaryConfig } from '../utils/cloudinaryUtils';
 
 interface EditRoomModalProps {
     isOpen: boolean;
@@ -122,12 +123,13 @@ export default function EditRoomModal({ isOpen, onClose, room, onRoomUpdated }: 
             if (!isNew) setUploadingFrameId(editingArtworkId);
 
             try {
+                const config = getCloudinaryConfig();
                 const compressedFile = await compressImage(croppedFile, 1920, 0.8);
                 const formData = new FormData();
                 formData.append('file', compressedFile);
-                formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+                formData.append('upload_preset', config.uploadPreset);
 
-                const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                const cloudinaryReq = await fetch(config.uploadUrl, {
                     method: 'POST',
                     body: formData,
                 });
@@ -175,12 +177,13 @@ export default function EditRoomModal({ isOpen, onClose, room, onRoomUpdated }: 
 
             // Upload new cover image if selected
             if (coverImageFile) {
+                const config = getCloudinaryConfig();
                 const compressedFile = await compressImage(coverImageFile, 1200, 0.8);
                 const formData = new FormData();
                 formData.append('file', compressedFile);
-                formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+                formData.append('upload_preset', config.uploadPreset);
 
-                const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                const cloudinaryReq = await fetch(config.uploadUrl, {
                     method: 'POST',
                     body: formData,
                 });

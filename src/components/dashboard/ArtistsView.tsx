@@ -126,18 +126,18 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
 
     return (
         <motion.div
-            className="flex-1 overflow-y-auto pr-4 mr-4 mt-4 relative z-10 custom-scrollbar pb-24"
+            className="flex-1 overflow-y-auto px-2 md:px-4 mr-0 md:mr-4 mt-4 relative z-10 custom-scrollbar pb-24"
             variants={containerVariants}
             initial="hidden"
             animate="show"
         >
-            <motion.div variants={itemVariants} className="mb-8 pl-4 flex items-center gap-4">
-                <div className="p-3 rounded-2xl shadow-sm border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
-                    <Users size={32} style={{ color: theme.primary }} />
+            <motion.div variants={itemVariants} className="mb-8 pl-4 flex items-center gap-3">
+                <div className="p-2 md:p-3 rounded-xl md:rounded-2xl shadow-sm border" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                    <Users size={24} className="md:w-8 md:h-8" style={{ color: theme.primary }} />
                 </div>
                 <div>
-                    <h2 className="text-4xl font-black tracking-tight" style={{ color: theme.text }}>Artists</h2>
-                    <p className="font-semibold opacity-70 mt-1" style={{ color: theme.text }}>
+                    <h2 className="text-2xl md:text-4xl font-black tracking-tight" style={{ color: theme.text }}>Artists</h2>
+                    <p className="font-semibold opacity-70 mt-0.5 text-sm md:text-base" style={{ color: theme.text }}>
                         Discover creators across ArtSpace
                     </p>
                 </div>
@@ -186,7 +186,7 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 p-2 md:p-4">
                     {artists.filter(artist => {
                         if (selectedCategory === 'All') return true;
                         return artist.artStyles?.includes(selectedCategory);
@@ -236,8 +236,8 @@ export default function ArtistsView({ containerVariants, itemVariants, onArtistC
                                 </div>
                             </div>
 
-                            {/* Action Buttons (Hover State Only) */}
-                            <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex flex-col gap-2">
+                            {/* Action Buttons (Visible on mobile, Hover on desktop) */}
+                            <div className="absolute inset-x-4 bottom-4 opacity-100 md:opacity-0 group-hover:opacity-100 translate-y-0 md:translate-y-4 group-hover:translate-y-0 transition-all duration-300 flex flex-col gap-2">
                                 <button
                                     onClick={() => onArtistClick(artist.uid)}
                                     className="w-full py-2.5 rounded-xl font-bold shadow-lg transition-transform hover:scale-105"

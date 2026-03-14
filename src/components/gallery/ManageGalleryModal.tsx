@@ -8,6 +8,7 @@ import { collection, query, where, doc, deleteDoc, onSnapshot, addDoc, serverTim
 import { ref, deleteObject } from 'firebase/storage';
 import { compressImage } from '../../utils/imageCompression';
 import ImageEditorModal from '../ImageEditorModal';
+import { getCloudinaryConfig } from '../../utils/cloudinaryUtils';
 
 interface ManageGalleryModalProps {
     isOpen: boolean;
@@ -131,12 +132,13 @@ export default function ManageGalleryModal({ isOpen, onClose, roomId }: ManageGa
         setFrames(prev => prev.map(f => f.index === frameIndex ? { ...f, uploading: true } : f));
 
         try {
+            const config = getCloudinaryConfig();
             const compressedFile = await compressImage(file, 1920, 0.8);
             const formData = new FormData();
             formData.append('file', compressedFile);
-            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+            formData.append('upload_preset', config.uploadPreset);
 
-            const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            const cloudinaryReq = await fetch(config.uploadUrl, {
                 method: 'POST',
                 body: formData,
             });

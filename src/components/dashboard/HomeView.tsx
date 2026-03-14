@@ -119,11 +119,11 @@ export default function HomeView({ containerVariants, itemVariants }: { containe
     }
 
     return (
-        <div className="flex-1 overflow-y-auto px-10 pb-12 pt-8">
-            <div className="flex justify-between items-end mb-8 max-w-7xl mx-auto">
+        <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-12 pt-4 md:pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 max-w-7xl mx-auto">
                 <div>
-                    <h1 className="text-3xl font-black mb-1" style={{ color: theme.text }}>Explore Rooms</h1>
-                    <p className="font-semibold opacity-60" style={{ color: theme.text }}>Discover curated 3D exhibitions from artists worldwide.</p>
+                    <h1 className="text-2xl md:text-3xl font-black mb-1" style={{ color: theme.text }}>Explore Rooms</h1>
+                    <p className="font-semibold opacity-60 text-sm md:text-base" style={{ color: theme.text }}>Discover curated 3D exhibitions from artists worldwide.</p>
                 </div>
 
                 <div className="relative group">

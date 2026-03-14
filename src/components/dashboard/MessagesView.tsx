@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { Search, MoreHorizontal, Send, Loader2, Mic, Square, Trash, X, Plus, Users } from 'lucide-react';
+import { Search, MoreHorizontal, Send, Loader2, Mic, Square, Trash, X, Plus, Users, ArrowLeft } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth, type UserProfile } from '../../context/AuthContext';
 import { db } from '../../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { getCloudinaryConfig, getCloudinaryVideoUploadUrl } from '../../utils/cloudinaryUtils';
 
 interface MessagesViewProps {
     containerVariants: Variants;
@@ -353,12 +354,14 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
         // Optimistic UI could be added here, but for simplicity we rely on the loader
 
         try {
+            const config = getCloudinaryConfig();
+            const videoUploadUrl = getCloudinaryVideoUploadUrl();
             const formData = new FormData();
             formData.append('file', audioBlob);
-            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+            formData.append('upload_preset', config.uploadPreset);
             formData.append('resource_type', 'video'); // Cloudinary treats audio as video
 
-            const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/video/upload`, {
+            const cloudinaryReq = await fetch(videoUploadUrl, {
                 method: 'POST',
                 body: formData,
             });
@@ -461,7 +464,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
 
     return (
         <motion.div
-            className="flex-1 flex overflow-hidden mr-4 my-4 rounded-[2.5rem] shadow-sm border"
+            className="flex-1 flex overflow-hidden m-0 md:mr-4 md:my-4 rounded-none md:rounded-[2.5rem] shadow-sm border-0 md:border"
             style={{ backgroundColor: theme.surface, borderColor: theme.border }}
             variants={containerVariants}
             initial="hidden"
@@ -470,7 +473,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
             {/* Contacts Sidebar */}
             <motion.div
                 variants={itemVariants}
-                className="w-[380px] border-r flex flex-col h-full"
+                className={`${selectedChat ? 'hidden md:flex' : 'flex'} w-full md:w-[380px] border-r flex flex-col h-full`}
                 style={{ borderColor: theme.border }}
             >
                 <div className="p-6 pb-4">
@@ -555,7 +558,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
             </motion.div>
 
             {/* Chat Area */}
-            <motion.div variants={itemVariants} className="flex-1 flex flex-col h-full bg-[#00000005]">
+            <motion.div variants={itemVariants} className={`${selectedChat ? 'flex' : 'hidden md:flex'} flex-1 flex flex-col h-full bg-[#00000005]`}>
                 {selectedChat ? (() => {
 
                     let chatTitle = "Group Chat";
@@ -575,21 +578,28 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
                     return (
                         <>
                             {/* Chat Header */}
-                            <div className="px-8 py-5 border-b flex justify-between items-center" style={{ borderColor: theme.border }}>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 flex items-center justify-center" style={{ backgroundColor: theme.surface, borderColor: theme.surface }}>
-                                        {selectedChat.isGroup ? <Users size={24} className="opacity-50" /> : <img src={chatAvatar} alt="avatar" className="w-full h-full object-cover" />}
+                            <div className="px-4 md:px-8 py-3 md:py-5 border-b flex justify-between items-center" style={{ borderColor: theme.border }}>
+                                <div className="flex items-center gap-3 md:gap-4">
+                                    <button
+                                        onClick={() => setSelectedChat(null)}
+                                        className="md:hidden p-2 hover:bg-black/5 rounded-full"
+                                        style={{ color: theme.text }}
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden flex-shrink-0 border-2 flex items-center justify-center" style={{ backgroundColor: theme.surface, borderColor: theme.surface }}>
+                                        {selectedChat.isGroup ? <Users size={20} className="md:w-6 md:h-6 opacity-50" /> : <img src={chatAvatar} alt="avatar" className="w-full h-full object-cover" />}
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-lg leading-tight" style={{ color: theme.text }}>{chatTitle}</h3>
-                                        <p className="text-sm font-medium opacity-60 m-0" style={{ color: theme.text }}>{chatSubtitle}</p>
+                                        <h3 className="font-bold text-base md:text-lg leading-tight" style={{ color: theme.text }}>{chatTitle}</h3>
+                                        <p className="text-xs md:text-sm font-medium opacity-60 m-0" style={{ color: theme.text }}>{chatSubtitle}</p>
                                     </div>
                                 </div>
                                 <div className="relative group/menu">
                                     <button className="p-2 hover:bg-black/5 rounded-full transition-colors focus:outline-none">
                                         <MoreHorizontal size={24} style={{ color: theme.text }} />
                                     </button>
-                                    <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg border opacity-0 group-hover/menu:opacity-100 pointer-events-none group-hover/menu:pointer-events-auto transition-opacity z-10" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
+                                    <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg border opacity-0 group-hover/menu:opacity-100 pointer-events-none group-hover/menu:pointer-events-auto transition-opacity z-[60]" style={{ backgroundColor: theme.surface, borderColor: theme.border }}>
                                         <button
                                             onClick={handleClearChat}
                                             className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 font-bold rounded-xl flex items-center gap-2"
@@ -601,7 +611,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
                             </div>
 
                             {/* Chat History */}
-                            <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col gap-4 md:gap-6 custom-scrollbar">
                                 {loadingMessages ? (
                                     <div className="flex justify-center items-center h-full">
                                         <Loader2 className="animate-spin" style={{ color: theme.text }} />
@@ -690,7 +700,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
                             </div>
 
                             {/* Chat Input */}
-                            <form onSubmit={handleSendMessage} className="p-6 pt-2">
+                            <form onSubmit={handleSendMessage} className="p-4 md:p-6 md:pt-2">
                                 <div className="relative flex items-center gap-2">
                                     <div className="relative flex-1">
                                         <input
@@ -728,7 +738,7 @@ export default function MessagesView({ containerVariants, itemVariants, initialU
                         </>
                     );
                 })() : (
-                    <div className="flex-1 flex items-center justify-center opacity-50">
+                    <div className="flex-1 hidden md:flex items-center justify-center opacity-50">
                         <p className="font-bold text-lg" style={{ color: theme.text }}>Select a conversation to start chatting</p>
                     </div>
                 )}

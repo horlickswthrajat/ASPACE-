@@ -8,6 +8,7 @@ import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/fi
 import { compressImage } from '../../utils/imageCompression';
 import { getContrastColor } from '../../utils/colorUtils';
 import ImageEditorModal from '../ImageEditorModal';
+import { getCloudinaryConfig } from '../../utils/cloudinaryUtils';
 
 interface CreateRoomWizardProps {
     containerVariants: Variants;
@@ -67,12 +68,13 @@ export default function CreateRoomWizard({ containerVariants }: CreateRoomWizard
 
             // Upload cover image if selected
             if (coverImageFile) {
+                const config = getCloudinaryConfig();
                 const compressedFile = await compressImage(coverImageFile, 1200, 0.8);
                 const formData = new FormData();
                 formData.append('file', compressedFile);
-                formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+                formData.append('upload_preset', config.uploadPreset);
 
-                const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                const cloudinaryReq = await fetch(config.uploadUrl, {
                     method: 'POST',
                     body: formData,
                 });
@@ -150,12 +152,13 @@ export default function CreateRoomWizard({ containerVariants }: CreateRoomWizard
         setFrames(prev => prev.map(f => f.index === frameIndex ? { ...f, uploading: true } : f));
 
         try {
+            const config = getCloudinaryConfig();
             const compressedFile = await compressImage(file, 1920, 0.8);
             const formData = new FormData();
             formData.append('file', compressedFile);
-            formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!);
+            formData.append('upload_preset', config.uploadPreset);
 
-            const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+            const cloudinaryReq = await fetch(config.uploadUrl, {
                 method: 'POST',
                 body: formData,
             });
@@ -218,28 +221,28 @@ export default function CreateRoomWizard({ containerVariants }: CreateRoomWizard
 
     return (
         <motion.div
-            className="flex-1 flex flex-col overflow-hidden mr-4 my-4 rounded-[2.5rem] shadow-sm border"
+            className="flex-1 flex flex-col overflow-hidden m-0 md:mr-4 md:my-4 rounded-none md:rounded-[2.5rem] shadow-sm border-0 md:border"
             variants={containerVariants}
             initial="hidden"
             animate="show"
             style={{ backgroundColor: theme.surface, color: theme.text, borderColor: theme.border }}
         >
             {/* Header progress */}
-            <div className="p-8 border-b" style={{ borderColor: theme.border }}>
-                <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors" style={{ backgroundColor: step === 1 ? theme.primary : theme.border, color: step === 1 ? getContrastColor(theme.primary) : theme.text }}>1</div>
-                    <h2 className="font-bold transition-opacity" style={{ color: theme.text, opacity: step === 1 ? 1 : 0.5 }}>Room Details</h2>
-                    <div className="w-12 h-1 rounded-full mx-2 transition-colors" style={{ backgroundColor: theme.border }} />
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full font-bold transition-colors" style={{ backgroundColor: step === 2 ? theme.primary : theme.border, color: step === 2 ? getContrastColor(theme.primary) : theme.text }}>2</div>
-                    <h2 className="font-bold transition-opacity" style={{ color: theme.text, opacity: step === 2 ? 1 : 0.5 }}>Place Artworks</h2>
+            <div className="p-4 md:p-8 border-b" style={{ borderColor: theme.border }}>
+                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto hide-scrollbar">
+                    <div className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-xs md:text-base transition-colors" style={{ backgroundColor: step === 1 ? theme.primary : theme.border, color: step === 1 ? getContrastColor(theme.primary) : theme.text }}>1</div>
+                    <h2 className="font-bold text-sm md:text-base whitespace-nowrap transition-opacity" style={{ color: theme.text, opacity: step === 1 ? 1 : 0.5 }}>Room Details</h2>
+                    <div className="w-8 md:w-12 h-0.5 md:h-1 rounded-full mx-1 md:mx-2 transition-colors flex-shrink-0" style={{ backgroundColor: theme.border }} />
+                    <div className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0 flex items-center justify-center rounded-full font-bold text-xs md:text-base transition-colors" style={{ backgroundColor: step === 2 ? theme.primary : theme.border, color: step === 2 ? getContrastColor(theme.primary) : theme.text }}>2</div>
+                    <h2 className="font-bold text-sm md:text-base whitespace-nowrap transition-opacity" style={{ color: theme.text, opacity: step === 2 ? 1 : 0.5 }}>Place Artworks</h2>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-12">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-12">
                 {step === 1 && (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto">
-                        <h1 className="text-4xl font-black mb-2 tracking-tight" style={{ color: theme.text }}>Create a New Room</h1>
-                        <p className="font-semibold mb-8" style={{ color: theme.text, opacity: 0.6 }}>Design a unique 3D space to showcase your collection.</p>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-xl mx-auto py-4 md:py-0">
+                        <h1 className="text-2xl md:text-4xl font-black mb-2 tracking-tight" style={{ color: theme.text }}>Create a New Room</h1>
+                        <p className="font-semibold mb-6 md:mb-8 text-sm md:text-base" style={{ color: theme.text, opacity: 0.6 }}>Design a unique 3D space to showcase your collection.</p>
 
                         <form onSubmit={handleCreateRoom} className="flex flex-col gap-6">
 
@@ -322,10 +325,10 @@ export default function CreateRoomWizard({ containerVariants }: CreateRoomWizard
 
                 {step === 2 && (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                        <div className="flex justify-between items-end mb-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
                             <div>
-                                <h1 className="text-3xl font-black mb-1" style={{ color: theme.text }}>{roomName}</h1>
-                                <p className="font-semibold" style={{ color: theme.text, opacity: 0.6 }}>Click a frame slot to upload an artwork (Max 12).</p>
+                                <h1 className="text-2xl md:text-3xl font-black mb-1" style={{ color: theme.text }}>{roomName}</h1>
+                                <p className="font-semibold text-sm md:text-base opacity-60" style={{ color: theme.text }}>Click a frame slot to upload an artwork (Max 12).</p>
                             </div>
                         </div>
 

@@ -92,7 +92,7 @@ export default function SearchView({ containerVariants, itemVariants, searchQuer
 
     return (
         <motion.div
-            className="flex-1 overflow-y-auto px-8 pb-12 pt-8 flex flex-col gap-10 max-w-4xl"
+            className="flex-1 overflow-y-auto px-4 md:px-8 pb-12 pt-4 md:pt-8 flex flex-col gap-10 max-w-4xl"
             variants={containerVariants}
             initial="hidden"
             animate="show"

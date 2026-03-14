@@ -266,29 +266,29 @@ export default function PublicProfileView({ userId, onBack, onMessage, container
 
     return (
         <motion.div
-            className="flex-1 overflow-y-auto px-10 pb-12 pt-4 max-w-5xl mx-auto w-full custom-scrollbar"
+            className="flex-1 overflow-y-auto px-4 md:px-10 pb-12 pt-4 max-w-5xl mx-auto w-full custom-scrollbar"
             variants={containerVariants}
             initial="hidden"
             animate="show"
         >
             {/* Top Actions */}
-            <motion.div variants={itemVariants} className="flex items-center justify-between mb-6">
+            <motion.div variants={itemVariants} className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                 <button
                     onClick={onBack}
-                    className="flex items-center gap-2 font-bold hover:opacity-70 transition-opacity"
+                    className="flex items-center gap-2 font-bold hover:opacity-70 transition-opacity self-start"
                     style={{ color: theme.text }}
                 >
                     <ArrowLeft size={20} />
-                    Back to Artists
+                    Back
                 </button>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     {user && user.uid !== userId && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                             {partnerStatus === 'none' && (
                                 <button
                                     onClick={handleRequestPartner}
                                     disabled={togglingPartner}
-                                    className="px-6 py-2 border-2 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
+                                    className="flex-1 sm:flex-none px-6 py-2 border-2 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
                                     style={{ borderColor: theme.primary, color: theme.primary }}
                                 >
                                     {togglingPartner ? <Loader2 size={16} className="animate-spin" /> : 'Request Partner'}
@@ -298,34 +298,34 @@ export default function PublicProfileView({ userId, onBack, onMessage, container
                                 <button
                                     onClick={handleRejectPartner} // Allow canceling
                                     disabled={togglingPartner}
-                                    className="px-6 py-2 bg-gray-200 border-2 border-transparent text-gray-500 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
+                                    className="flex-1 sm:flex-none px-6 py-2 bg-gray-200 border-2 border-transparent text-gray-500 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
                                 >
                                     {togglingPartner ? <Loader2 size={16} className="animate-spin" /> : 'Request Sent'}
                                 </button>
                             )}
                             {partnerStatus === 'pending_received' && (
-                                <>
+                                <div className="flex gap-2 w-full sm:w-auto">
                                     <button
                                         onClick={handleAcceptPartner}
                                         disabled={togglingPartner}
-                                        className="px-6 py-2 bg-green-500 border-2 border-transparent text-white rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
+                                        className="flex-1 sm:flex-none px-4 py-2 bg-green-500 border-2 border-transparent text-white rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50 text-sm sm:text-base"
                                     >
-                                        Accept Request
+                                        Accept
                                     </button>
                                     <button
                                         onClick={handleRejectPartner}
                                         disabled={togglingPartner}
-                                        className="px-6 py-2 bg-red-500 border-2 border-transparent text-white rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
+                                        className="flex-1 sm:flex-none px-4 py-2 bg-red-500 border-2 border-transparent text-white rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50 text-sm sm:text-base"
                                     >
                                         Reject
                                     </button>
-                                </>
+                                </div>
                             )}
                             {partnerStatus === 'accepted' && (
                                 <button
                                     onClick={handleRemovePartner}
                                     disabled={togglingPartner}
-                                    className="px-6 py-2 bg-transparent border-2 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
+                                    className="flex-1 sm:flex-none px-6 py-2 bg-transparent border-2 rounded-full font-bold shadow-sm hover:scale-105 transition-all outline-none disabled:opacity-50"
                                     style={{ borderColor: theme.primary, color: theme.primary }}
                                 >
                                     {togglingPartner ? <Loader2 size={16} className="animate-spin text-current" /> : 'Remove Partner'}
@@ -335,7 +335,7 @@ export default function PublicProfileView({ userId, onBack, onMessage, container
                     )}
                     <button
                         onClick={onMessage}
-                        className="px-6 py-2 rounded-full font-bold shadow-sm hover:scale-105 transition-transform"
+                        className="flex-1 sm:flex-none px-6 py-2 rounded-full font-bold shadow-sm hover:scale-105 transition-transform"
                         style={{ backgroundColor: theme.primary, color: theme.background }}
                     >
                         Message Artist
@@ -353,9 +353,9 @@ export default function PublicProfileView({ userId, onBack, onMessage, container
             </motion.div>
 
             {/* Profile Info (Overlapping Banner) */}
-            <motion.div variants={itemVariants} className="flex flex-col items-center -mt-20 relative px-8">
+            <motion.div variants={itemVariants} className="flex flex-col items-center -mt-16 md:-mt-20 relative px-4 md:px-8">
                 <div
-                    className="w-32 h-32 rounded-full overflow-hidden border-4 shadow-xl mb-4 relative z-10"
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 shadow-xl mb-4 relative z-10"
                     style={{ borderColor: theme.surface, backgroundColor: theme.primary }}
                 >
                     <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
@@ -390,18 +390,18 @@ export default function PublicProfileView({ userId, onBack, onMessage, container
                             </div>
                         )}
 
-                        <div className="flex items-center justify-center gap-12 mt-2 w-full max-w-md mx-auto py-6 border-y" style={{ borderColor: `${theme.text}20` }}>
+                        <div className="flex items-center justify-center gap-6 md:gap-12 mt-2 w-full max-w-md mx-auto py-6 border-y" style={{ borderColor: `${theme.text}20` }}>
                             <button
                                 onClick={() => setIsPartnersModalOpen(true)}
                                 className="text-center group p-2 rounded-xl transition-colors hover:bg-black/5 flex flex-col items-center"
                             >
-                                <p className="font-black text-2xl transition-transform group-hover:scale-105" style={{ color: theme.text }}>{profile.partnersCount || 0}</p>
-                                <p className="text-sm font-bold opacity-50 uppercase tracking-widest mt-1 group-hover:opacity-100 transition-opacity" style={{ color: theme.text }}>Partners</p>
+                                <p className="font-black text-xl md:text-2xl transition-transform group-hover:scale-105" style={{ color: theme.text }}>{profile.partnersCount || 0}</p>
+                                <p className="text-[10px] md:text-sm font-bold opacity-50 uppercase tracking-widest mt-1 group-hover:opacity-100 transition-opacity" style={{ color: theme.text }}>Partners</p>
                             </button>
                             <div className="w-px h-12" style={{ backgroundColor: `${theme.text}20` }} />
                             <div className="text-center">
-                                <p className="font-black text-2xl" style={{ color: theme.text }}>{rooms.length}</p>
-                                <p className="text-sm font-bold opacity-50 uppercase tracking-widest mt-1" style={{ color: theme.text }}>Rooms</p>
+                                <p className="font-black text-xl md:text-2xl" style={{ color: theme.text }}>{rooms.length}</p>
+                                <p className="text-[10px] md:text-sm font-bold opacity-50 uppercase tracking-widest mt-1" style={{ color: theme.text }}>Rooms</p>
                             </div>
                         </div>
                     </div>

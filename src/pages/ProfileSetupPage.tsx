@@ -6,6 +6,7 @@ import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
 import ImageEditorModal from '../components/ImageEditorModal';
 import { useAuth } from '../context/AuthContext';
+import { getCloudinaryConfig } from '../utils/cloudinaryUtils';
 
 const AVATAR_SEEDS = [
     'Felix', 'Aneka', 'Oliver', 'Mimi', 'Lola',
@@ -61,15 +62,16 @@ export default function ProfileSetupPage() {
 
             // Upload to Cloudinary if a custom avatar was cropped and selected
             if (customAvatar) {
+                const config = getCloudinaryConfig();
                 const formData = new FormData();
                 formData.append('file', customAvatar);
-                formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+                formData.append('upload_preset', config.uploadPreset);
                 formData.append('folder', 'artspace_avatars');
 
-                const cloudinaryRes = await fetch(
-                    `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
-                    { method: 'POST', body: formData }
-                ).then(r => r.json());
+                const cloudinaryRes = await fetch(config.uploadUrl, { 
+                    method: 'POST', 
+                    body: formData 
+                }).then(r => r.json());
 
                 if (cloudinaryRes.error) {
                     throw new Error(cloudinaryRes.error.message);

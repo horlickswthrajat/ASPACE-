@@ -114,22 +114,22 @@ export default function DashboardPage() {
 
     return (
         <motion.div
-            className="absolute inset-0 flex z-30 overflow-hidden"
+            className="absolute inset-0 flex flex-col md:flex-row z-30 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(10px)' }}
             transition={{ duration: 0.8, ease: "easeOut" }}
             style={{ backgroundColor: theme.background }}
         >
-            {/* Sidebar Gradient overlay to match reference left side */}
+            {/* Sidebar Gradient overlay to match reference left side - Hidden on mobile */}
             <div
-                className="absolute top-0 left-0 bottom-0 w-[400px] pointer-events-none transition-all duration-1000"
+                className="absolute top-0 left-0 bottom-0 w-[400px] pointer-events-none transition-all duration-1000 hidden md:block"
                 style={{ background: `linear-gradient(to right, ${theme.primary}E6, transparent)` }}
             />
 
-            {/* Sidebar */}
+            {/* Sidebar - Hidden on mobile */}
             <motion.aside
-                className="w-72 flex flex-col p-8 z-10 relative"
+                className="w-72 hidden md:flex flex-col p-8 z-10 relative"
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
@@ -214,14 +214,14 @@ export default function DashboardPage() {
             </motion.aside>
 
             {/* Main Content */}
-            <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 p-2">
+            <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 p-2 pb-20 md:pb-2">
                 {/* Topbar */}
-                <header className="flex items-center justify-between p-8 pb-4">
+                <header className="flex items-center justify-between p-4 md:p-8 pb-4">
                     <motion.div
                         initial={{ opacity: 0, y: -20, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                        className="relative w-[32rem] max-w-2xl group"
+                        className="relative w-full md:w-[32rem] max-w-2xl group"
                     >
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 transition-colors z-10" style={{ color: theme.text, opacity: 0.5 }} size={20} strokeWidth={2.5} />
                         <input
@@ -309,6 +309,55 @@ export default function DashboardPage() {
                     isOpen={isNotificationsOpen}
                     onClose={() => setIsNotificationsOpen(false)}
                 />
+
+                {/* Bottom Navigation for Mobile */}
+                <nav
+                    className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around p-4 backdrop-blur-xl border-t neumorphic-glass"
+                    style={{ backgroundColor: `${theme.surface}CC`, borderColor: theme.border }}
+                >
+                    {[
+                        { icon: Home, label: 'Home' },
+                        { icon: Search, label: 'Search' },
+                        { icon: Users, label: 'Artists' },
+                        { icon: LayoutGrid, label: 'Builder' },
+                        { icon: User, label: 'Profile' }
+                    ].map((item, index) => {
+                        const isActive = activeTab === item.label;
+                        return (
+                            <button
+                                key={index}
+                                onClick={() => setActiveTab(item.label)}
+                                className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'scale-110' : 'opacity-60'}`}
+                                style={{ color: isActive ? theme.primary : theme.text }}
+                            >
+                                <div className="relative">
+                                    <item.icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                                    {((item.label === 'Notifications' && unreadNotificationsCount > 0) || (item.label === 'Messages' && unreadMessagesCount > 0)) && (
+                                        <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
+                                            {item.label === 'Notifications' ? unreadNotificationsCount : unreadMessagesCount}
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-[10px] font-bold">{item.label}</span>
+                            </button>
+                        );
+                    })}
+                    <button
+                        onClick={() => setIsNotificationsOpen(true)}
+                        className={`flex flex-col items-center gap-1 opacity-60`}
+                        style={{ color: theme.text }}
+                    >
+                        <div className="relative">
+                            <Bell size={24} />
+                            {unreadNotificationsCount > 0 && (
+                                <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
+                                    {unreadNotificationsCount > 20 ? '20+' : unreadNotificationsCount}
+                                </div>
+                            )}
+                        </div>
+                        <span className="text-[10px] font-bold">Alerts</span>
+                    </button>
+                </nav>
             </main>
 
             {/* Modals */}

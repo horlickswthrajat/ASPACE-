@@ -116,7 +116,7 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
 
     return (
         <motion.div
-            className="flex-1 overflow-y-auto px-10 pb-12 pt-6 max-w-5xl mx-auto w-full"
+            className="flex-1 overflow-y-auto px-4 md:px-10 pb-12 pt-4 md:pt-6 max-w-5xl mx-auto w-full"
             variants={containerVariants}
             initial="hidden"
             animate="show"
@@ -131,16 +131,16 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
             </motion.div>
 
             {/* Profile Info (Overlapping Banner) */}
-            <motion.div variants={itemVariants} className="flex flex-col items-center -mt-20 relative px-8">
+            <motion.div variants={itemVariants} className="flex flex-col items-center -mt-16 md:-mt-20 relative px-4 md:px-8">
                 <div
-                    className="w-32 h-32 rounded-full overflow-hidden border-4 shadow-xl mb-4 relative z-10"
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 shadow-xl mb-4 relative z-10"
                     style={{ borderColor: theme.surface, backgroundColor: theme.primary }}
                 >
                     <img src={avatarUrl} alt="User Profile" className="w-full h-full object-cover" />
                 </div>
 
-                <div className="flex w-full justify-between items-start -mt-16 pt-16">
-                    <div className="w-32" /> {/* Spacer to balance layout */}
+                <div className="flex flex-col md:flex-row w-full justify-between items-center md:items-start gap-6 md:gap-0">
+                    <div className="hidden md:block w-32" /> {/* Spacer to balance layout */}
 
                     <div className="text-center flex-1">
                         <h1 className="text-2xl font-black tracking-wide" style={{ color: theme.text }}>{displayName}</h1>
@@ -148,7 +148,7 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
                             @{emailPrefix}
                         </p>
 
-                        <div className="flex flex-col items-center justify-center mt-6">
+                        <div className="flex flex-col items-center justify-center mt-4 md:mt-6">
                             <button
                                 onClick={() => setIsPartnersModalOpen(true)}
                                 className="text-center group p-2 rounded-xl transition-colors hover:bg-black/5"
@@ -159,14 +159,14 @@ export default function ProfileView({ containerVariants, itemVariants, onEditPro
                         </div>
                     </div>
 
-                    <div className="w-32 flex justify-end">
+                    <div className="w-full md:w-32 flex justify-center md:justify-end">
                         <button
                             onClick={onEditProfile}
-                            className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all hover:scale-105 active:scale-95 shadow-md flex-shrink-0"
+                            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all hover:scale-105 active:scale-95 shadow-md w-full md:w-auto"
                             style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
                         >
                             <Settings size={18} />
-                            Edit
+                            Edit Profile
                         </button>
                     </div>
                 </div>

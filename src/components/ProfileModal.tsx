@@ -6,6 +6,7 @@ import { compressImage } from '../utils/imageCompression';
 import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
 import ImageEditorModal from './ImageEditorModal';
+import { getCloudinaryConfig } from '../utils/cloudinaryUtils';
 
 const AVATAR_SEEDS = [
     'Felix', 'Aneka', 'Oliver', 'Mimi', 'Lola',
@@ -116,11 +117,12 @@ export default function ProfileModal({ isOpen, onClose, currentName, currentUser
             if (customAvatar && user) {
                 const compressedAvatar = await compressImage(customAvatar, 500, 0.8);
 
+                const config = getCloudinaryConfig();
                 const formData = new FormData();
                 formData.append('file', compressedAvatar);
-                formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+                formData.append('upload_preset', config.uploadPreset);
 
-                const cloudinaryReq = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                const cloudinaryReq = await fetch(config.uploadUrl, {
                     method: 'POST',
                     body: formData,
                 });
