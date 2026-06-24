@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { Search, Home, Bell, Mail, User, LayoutGrid, LogOut, Users, Settings } from 'lucide-react';
+import { Search, Home, Bell, Mail, User, LayoutGrid, LogOut, Users, Settings, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from '../components/ProfileModal';
 import SettingsModal from '../components/SettingsModal';
@@ -45,10 +45,14 @@ export default function DashboardPage() {
     const { user, profile, loading, signOut, updateUserProfile } = useAuth();
 
     useEffect(() => {
-        if (!loading && !user) {
-            navigate('/login');
+        if (!loading) {
+            if (!user) {
+                navigate('/login');
+            } else if (!profile) {
+                navigate('/setup-profile');
+            }
         }
-    }, [user, loading, navigate]);
+    }, [user, profile, loading, navigate]);
 
     // UI State
     const [activeTab, setActiveTab] = useState('Home');
@@ -74,6 +78,8 @@ export default function DashboardPage() {
 
         const unsubNotifs = onSnapshot(notifQuery, (snapshot) => {
             setUnreadNotificationsCount(snapshot.docs.length);
+        }, (error: Error) => {
+            console.error("Notifications snapshot error:", error);
         });
 
         // Unread Messages loop
@@ -91,6 +97,8 @@ export default function DashboardPage() {
                 }
             });
             setUnreadMessagesCount(totalUnread);
+        }, (error: Error) => {
+            console.error("Chats snapshot error:", error);
         });
 
         return () => {
@@ -108,8 +116,26 @@ export default function DashboardPage() {
         }
     };
 
-    if (loading || !profile) {
-        return <div className="min-h-screen flex items-center justify-center font-bold transition-colors duration-1000" style={{ backgroundColor: theme.background, color: theme.text }}>Loading Art Space...</div>;
+    if (loading) {
+        return (
+            <div 
+                className="w-full h-full min-h-screen flex flex-col items-center justify-center font-black transition-colors duration-500" 
+                style={{ backgroundColor: theme?.background || '#010030', color: theme?.text || '#ffffff' }}
+            >
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="mb-4"
+                >
+                    <Loader2 size={48} />
+                </motion.div>
+                <p className="text-xl">Initializing Art Space...</p>
+            </div>
+        );
+    }
+
+    if (!profile) {
+        return null; // Will be redirected by useEffect
     }
 
     return (
@@ -343,7 +369,7 @@ export default function DashboardPage() {
                                         <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
                                             {unreadMessagesCount > 20 ? '20+' : unreadMessagesCount}
                                         </div>
-                                    )}
+                                    )}             
                                 </div>
                                 <span className="text-[9px] font-bold">{item.label}</span>
                             </button>

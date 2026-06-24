@@ -57,54 +57,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
-            if (currentUser) {
-                // Fetch or create user profile in Firestore
-                const userDocRef = doc(db, 'users', currentUser.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    const data = userDoc.data() as UserProfile;
-
-                    // Self-healing: verify and fix partner count mismatch
+            try {
+                setUser(currentUser);
+                if (currentUser) {
+                    // Fetch or create user profile in Firestore
+                    const userDocRef = doc(db, 'users', currentUser.uid);
+                    let userDoc;
+                    
                     try {
-                        const q1 = query(collection(db, 'partnerships'), where('user1', '==', currentUser.uid), where('status', '==', 'accepted'));
-                        const q2 = query(collection(db, 'partnerships'), where('user2', '==', currentUser.uid), where('status', '==', 'accepted'));
-                        const [s1, s2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-                        const actualCount = s1.size + s2.size;
-
-                        if (actualCount !== data.partnersCount) {
-                            await updateDoc(userDocRef, { partnersCount: actualCount });
-                            data.partnersCount = actualCount;
-                        }
-                    } catch (e) {
-                        console.error("Failed to verify partner count", e);
+                        userDoc = await getDoc(userDocRef);
+                    } catch (e: any) {
+                        console.error("Firestore Permission Denied for user doc. This usually means security rules are locking the 'users' collection.", e);
+                        // If we can't even read the user doc, we can't proceed with profile logic
+                        setProfile(null);
+                        setLoading(false);
+                        return;
                     }
 
-                    setProfile(data);
-                } else {
-                    // Create new profile for first-time user
-                    const defaultUsername = `user${currentUser.uid.substring(0, 8)}`;
-                    const newProfile: UserProfile = {
-                        uid: currentUser.uid,
-                        email: currentUser.email,
-                        displayName: currentUser.displayName || 'Anonymous Artist',
-                        username: defaultUsername,
-                        usernameLowercase: defaultUsername.toLowerCase(),
-                        photoURL: currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}`,
-                        bio: '',
-                        artStyles: [],
-                        partnersCount: 0,
-                        createdAt: serverTimestamp()
-                    } as any; // Cast added to bypass strict property checks on serverTimestamp for now
+                    if (userDoc?.exists()) {
+                        const data = userDoc.data() as UserProfile;
 
-                    await setDoc(userDocRef, newProfile);
-                    setProfile(newProfile);
+                        // Self-healing: verify and fix partner count mismatch
+                        try {
+                            const q1 = query(collection(db, 'partnerships'), where('user1', '==', currentUser.uid), where('status', '==', 'accepted'));
+                            const q2 = query(collection(db, 'partnerships'), where('user2', '==', currentUser.uid), where('status', '==', 'accepted'));
+                            const [s1, s2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+                            const actualCount = s1.size + s2.size;
+
+                            if (actualCount !== (data.partnersCount || 0)) {
+                                await updateDoc(userDocRef, { partnersCount: actualCount });
+                                data.partnersCount = actualCount;
+                            }
+                        } catch (e) {
+                            console.warn("Failed to verify partner count (likely missing permissions or index)", e);
+                        }
+
+                        setProfile(data);
+                    } else {
+                        // Create new profile for first-time user
+                        try {
+                            const defaultUsername = `user${currentUser.uid.substring(0, 8)}`;
+                            const newProfile: UserProfile = {
+                                uid: currentUser.uid,
+                                email: currentUser.email,
+                                displayName: currentUser.displayName || 'Anonymous Artist',
+                                username: defaultUsername,
+                                usernameLowercase: defaultUsername.toLowerCase(),
+                                photoURL: currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}`,
+                                bio: '',
+                                artStyles: [],
+                                partnersCount: 0,
+                                createdAt: serverTimestamp()
+                            } as any;
+
+                            await setDoc(userDocRef, newProfile);
+                            setProfile(newProfile);
+                        } catch (e) {
+                            console.error("Failed to create new user profile in Firestore", e);
+                        }
+                    }
+                } else {
+                    setProfile(null);
                 }
-            } else {
-                setProfile(null);
+            } catch (error) {
+                console.error("Critical error in AuthProvider:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -148,18 +167,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const updateUserProfile = async (displayName: string, newUsername: string, photoURL: string, bio: string = '', artStyles: string[] = []) => {
-        if (!user || !profile) return;
+        if (!user) return;
         try {
             const updates: any = { displayName, photoURL, bio, artStyles };
 
             // Handle username changes
             let changingUsername = false;
-            let finalUsername = profile.username;
-            let finalUsernameLowercase = profile.usernameLowercase;
+            let finalUsername = profile?.username || `user${user.uid.substring(0, 8)}`;
+            let finalUsernameLowercase = profile?.usernameLowercase || finalUsername.toLowerCase();
 
-            if (newUsername && newUsername !== profile.username) {
+            if (newUsername && newUsername !== profile?.username) {
                 // Check 3-day cooldown
-                if (profile.lastUsernameChange) {
+                if (profile?.lastUsernameChange) {
                     const lastChangeDate = profile.lastUsernameChange.toDate ? profile.lastUsernameChange.toDate() : new Date(profile.lastUsernameChange);
                     const daysSinceChange = (Date.now() - lastChangeDate.getTime()) / (1000 * 60 * 60 * 24);
                     if (daysSinceChange < 3) {
@@ -185,24 +204,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 finalUsernameLowercase = lowercaseNew;
             }
 
+            // Ensure username and usernameLowercase exist
+            if (!profile?.username) {
+                updates.username = finalUsername;
+                updates.usernameLowercase = finalUsernameLowercase;
+            }
+
             // Update Firestore
             const userDocRef = doc(db, 'users', user.uid);
             await setDoc(userDocRef, updates, { merge: true });
 
             // Update local state
-            setProfile({
-                ...profile,
+            setProfile(prev => ({
+                ...prev,
+                uid: user.uid,
+                email: user.email,
                 displayName,
                 photoURL,
                 bio,
                 artStyles,
+                partnersCount: prev?.partnersCount || 0,
+                username: finalUsername,
+                usernameLowercase: finalUsernameLowercase,
                 ...(changingUsername && {
-                    username: finalUsername,
-                    usernameLowercase: finalUsernameLowercase,
-                    // Use Date.now() locally as a placeholder since serverTimestamp() is evaluated on the server
                     lastUsernameChange: { toDate: () => new Date() }
                 })
-            });
+            }) as UserProfile);
         } catch (error) {
             console.error("Error updating profile", error);
             throw error;

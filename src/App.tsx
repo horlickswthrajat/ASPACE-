@@ -2,6 +2,42 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { AnimatePresence } from 'framer-motion';
+import React, { Suspense } from 'react';
+
+// Simple Error Boundary component
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("App Crash:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#010030] text-white p-10 text-center">
+          <h1 className="text-4xl font-bold mb-4">Something went wrong.</h1>
+          <p className="text-xl opacity-80 mb-8">The ArtSpace encountered a critical error. Please try refreshing the page.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/20 transition-all"
+          >
+            Refresh App
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
@@ -27,6 +63,7 @@ function AnimatedRoutes() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/gallery/:id" element={<GalleryPage />} />
+        <Route path="*" element={<LoginPage />} /> {/* Fallback to login for any unknown routes */}
       </Routes>
     </AnimatePresence>
   );
@@ -34,8 +71,11 @@ function AnimatedRoutes() {
 
 function AppContent() {
   const { theme } = useAppContext();
+  const location = useLocation();
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [showSplash, setShowSplash] = useState(true);
+
+  const isGallery = location.pathname.startsWith('/gallery');
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -50,7 +90,7 @@ function AppContent() {
   }, []);
 
   return (
-    <Router>
+    <ErrorBoundary>
       <div
         className="relative w-screen h-screen overflow-hidden transition-colors duration-1000"
         style={{ backgroundColor: showSplash ? '#000000' : theme.background }}
@@ -59,16 +99,18 @@ function AppContent() {
         {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
 
         {/* 3D Background */}
-        <div className="absolute inset-0 z-0 transition-opacity duration-1000">
-          <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-            <Background3D mousePosition={mousePosition} />
-          </Canvas>
+        <div className={`absolute inset-0 z-0 transition-opacity duration-1000 ${isGallery ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <Suspense fallback={null}>
+            <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+              <Background3D mousePosition={mousePosition} />
+            </Canvas>
+          </Suspense>
         </div>
 
         {/* Overlay Content */}
         {!showSplash && <AnimatedRoutes />}
       </div>
-    </Router>
+    </ErrorBoundary>
   );
 }
 
@@ -76,7 +118,9 @@ function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
         <Analytics />
       </AppProvider>
     </AuthProvider>

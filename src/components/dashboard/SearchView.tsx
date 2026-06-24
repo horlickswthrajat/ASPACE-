@@ -4,7 +4,7 @@ import { motion, type Variants } from 'framer-motion';
 import { Search, User, X } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import type { UserProfile } from '../../context/AuthContext';
 
 interface SearchViewProps {
@@ -61,23 +61,27 @@ export default function SearchView({ containerVariants, itemVariants, searchQuer
 
             setIsSearching(true);
             try {
-                // To do prefix search in Firestore: >= query, <= query + '\uf8ff'
-                const lowerQuery = searchQuery.toLowerCase();
+                const lowerQuery = searchQuery.toLowerCase().trim();
                 const usersRef = collection(db, 'users');
-                const q = query(
-                    usersRef,
-                    where('usernameLowercase', '>=', lowerQuery),
-                    where('usernameLowercase', '<=', lowerQuery + '\uf8ff'),
-                    limit(20)
-                );
-
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(usersRef);
                 const results: UserProfile[] = [];
+                
                 snapshot.forEach(doc => {
-                    results.push(doc.data() as UserProfile);
+                    const data = doc.data() as UserProfile;
+                    if (data.uid === doc.id) { // Sanity check
+                        const username = (data.username || '').toLowerCase();
+                        const displayName = (data.displayName || '').toLowerCase();
+                        
+                        if (username.includes(lowerQuery) || displayName.includes(lowerQuery)) {
+                            results.push(data);
+                        }
+                    }
                 });
 
-                setSearchResults(results);
+                // Sort results alphabetically by display name
+                results.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+
+                setSearchResults(results.slice(0, 20));
             } catch (error) {
                 console.error("Search failed:", error);
             } finally {

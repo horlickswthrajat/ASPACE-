@@ -50,6 +50,8 @@ export default function SignUpPage() {
                 setError('An account with this email already exists.');
             } else if (err.code === 'auth/weak-password') {
                 setError('Password is too weak.');
+            } else if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('auth/unauthorized-domain'))) {
+                setError(`Domain unauthorized. Please use http://localhost:5173 or add "${window.location.hostname}" to Authorized Domains in your Firebase Console.`);
             } else {
                 setError(err.message || 'Failed to create an account.');
             }
@@ -66,10 +68,40 @@ export default function SignUpPage() {
             await signInWithGoogle();
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.message || "Failed to sign up with Google");
+            if (err.code === 'auth/unauthorized-domain' || (err.message && err.message.includes('auth/unauthorized-domain'))) {
+                setError(`Domain unauthorized. Please use http://localhost:5173 or add "${window.location.hostname}" to Authorized Domains in your Firebase Console.`);
+            } else {
+                setError(err.message || "Failed to sign up with Google");
+            }
         } finally {
             setLoading(false);
         }
+    };
+
+    const renderError = () => {
+        if (!error) return null;
+        const isUnauthorizedDomain = error.includes('auth/unauthorized-domain') || error.includes('Domain unauthorized');
+        const showLocalhostSwitch = isUnauthorizedDomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        
+        return (
+            <div className="flex flex-col gap-2 text-red-500 text-sm font-semibold bg-red-100/50 p-3 rounded-xl border border-red-200">
+                <div className="flex items-center gap-2">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{error}</span>
+                </div>
+                {showLocalhostSwitch && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.location.href = `http://localhost:${window.location.port || '5173'}${window.location.pathname}${window.location.search}`;
+                        }}
+                        className="mt-1 text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors self-start font-bold cursor-pointer"
+                    >
+                        Switch to localhost
+                    </button>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -162,12 +194,7 @@ export default function SignUpPage() {
                         </button>
                     </div>
 
-                    {error && (
-                        <div className="flex items-center gap-2 text-red-500 text-sm font-semibold bg-red-100/50 p-3 rounded-xl border border-red-200">
-                            <AlertCircle size={16} />
-                            {error}
-                        </div>
-                    )}
+                    {renderError()}
 
                     <button
                         type="submit"

@@ -1,79 +1,127 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Environment, Float } from '@react-three/drei';
+import { useEffect, useRef, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-const GlowingFrame = ({ position, rotation, color, scale }: { position: [number, number, number], rotation: [number, number, number], color: string, scale: number }) => {
-    const meshRef = useRef<THREE.Mesh>(null);
-
-    // Slowly rotate the floating frames
-    useFrame((_, delta) => {
-        if (meshRef.current) {
-            meshRef.current.rotation.x += delta * 0.2;
-            meshRef.current.rotation.y += delta * 0.15;
-        }
-    });
-
-    return (
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
-            <mesh ref={meshRef} position={position} rotation={rotation} scale={scale}>
-                <boxGeometry args={[3, 4, 0.2]} />
-                <meshStandardMaterial
-                    color={color}
-                    emissive={color}
-                    emissiveIntensity={2}
-                    toneMapped={false}
-                    wireframe
-                />
-            </mesh>
-        </Float>
-    );
-};
-
 export default function Background3D({ mousePosition }: { mousePosition: { x: number, y: number } }) {
-    const groupRef = useRef<THREE.Group>(null);
+    const { viewport, size } = useThree();
+    const [videoTexture, setVideoTexture] = useState<THREE.VideoTexture | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-    // Parallax effect based on mouse movement + continuous drift
+    useEffect(() => {
+        const video = document.createElement('video');
+        video.src = '/minecraft-fireflies-forest-moewalls-com.mp4';
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+
+        videoRef.current = video;
+
+        video.play()
+            .then(() => {
+                const texture = new THREE.VideoTexture(video);
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.format = THREE.RGBAFormat;
+                setVideoTexture(texture);
+            })
+            .catch((err) => {
+                console.error("Video play failed:", err);
+            });
+
+        return () => {
+            if (videoRef.current) {
+                videoRef.current.pause();
+                videoRef.current = null;
+            }
+        };
+    }, []);
+
+    // Update uniform values on every frame
     useFrame((state) => {
-        if (groupRef.current) {
-            const time = state.clock.getElapsedTime();
-
-            // Mouse target
-            const targetX = (mousePosition.x - 0.5) * 2; // -1 to 1
-            const targetY = (mousePosition.y - 0.5) * 2;
-
-            // Base drift animation
-            const driftX = Math.sin(time * 0.2) * 0.1;
-            const driftY = Math.cos(time * 0.15) * 0.1;
-
-            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, (targetX * 0.1) + driftX, 0.05);
-            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, (targetY * 0.1) + driftY, 0.05);
+        if (materialRef.current) {
+            materialRef.current.uniforms.uTime.value = state.clock.getElapsedTime();
+            materialRef.current.uniforms.uMouse.value.set(mousePosition.x, mousePosition.y);
         }
     });
 
+    if (!videoTexture) return null;
+
+    // Shader definition
+    const vertexShader = `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `;
+
+    const fragmentShader = `
+        uniform sampler2D uTexture;
+        uniform vec2 uMouse;
+        uniform float uTime;
+        uniform float uAspect;
+        varying vec2 vUv;
+
+        void main() {
+            vec2 uv = vUv;
+            
+            // Invert Y to match screen space with texture space
+            vec2 mouse = vec2(uMouse.x, 1.0 - uMouse.y);
+            
+            // Correct for aspect ratio to make distortion circular
+            vec2 distVec = uv - mouse;
+            distVec.x *= uAspect;
+            float dist = length(distVec);
+            
+            // 1. Mouse Displacement (push away)
+            float pushRadius = 0.28;
+            if (dist < pushRadius) {
+                float strength = smoothstep(pushRadius, 0.0, dist);
+                // Push texture coordinates away from mouse cursor
+                uv -= normalize(vUv - mouse) * strength * 0.05;
+            }
+            
+            // 2. Wave Ripple Effect
+            float rippleRadius = 0.35;
+            if (dist < rippleRadius) {
+                float wave = sin(dist * 45.0 - uTime * 6.0);
+                float strength = smoothstep(rippleRadius, 0.0, dist) * 0.015;
+                uv += normalize(vUv - mouse) * wave * strength;
+            }
+            
+            vec4 color = texture2D(uTexture, uv);
+            
+            // 3. Brand pink hover glow
+            if (dist < 0.15) {
+                float glow = smoothstep(0.15, 0.0, dist) * 0.18;
+                color.rgb += vec3(0.99, 0.67, 0.72) * glow;
+            }
+            
+            gl_FragColor = color;
+        }
+    `;
+
+    const aspect = size.width / size.height;
+
     return (
-        <>
-            <color attach="background" args={['#000000']} />
-            <fog attach="fog" args={['#000000', 10, 30]} />
-            <ambientLight intensity={1.5} color="#ffffff" />
-
-            <group ref={groupRef}>
-                {/* Background gradient-like effect using points/lights */}
-                <pointLight position={[5, 5, -5]} color="#ffffff" intensity={300} distance={50} />
-                <pointLight position={[-5, -5, -5]} color="#ffffff" intensity={200} distance={50} />
-
-                {/* Simulated Room Box */}
-                <mesh position={[0, 0, -10]}>
-                    <boxGeometry args={[40, 40, 40]} />
-                    <meshStandardMaterial color="#111111" side={THREE.BackSide} roughness={0.6} metalness={0.1} />
-                </mesh>
-
-                <GlowingFrame position={[-5, 2, -5]} rotation={[0.2, 0.5, 0]} color="#ffffff" scale={1} />
-                <GlowingFrame position={[6, -1, -8]} rotation={[-0.2, -0.4, 0.1]} color="#ffffff" scale={1.2} />
-                <GlowingFrame position={[-2, -3, -4]} rotation={[0.1, 0.2, -0.1]} color="#ffffff" scale={0.8} />
-                <GlowingFrame position={[4, 4, -6]} rotation={[-0.1, 0.3, 0.2]} color="#ffffff" scale={0.9} />
-            </group>
-            <Environment preset="city" />
-        </>
+        <mesh position={[0, 0, 0]}>
+            <planeGeometry args={[viewport.width, viewport.height]} />
+            <shaderMaterial
+                ref={materialRef}
+                vertexShader={vertexShader}
+                fragmentShader={fragmentShader}
+                uniforms={{
+                    uTexture: { value: videoTexture },
+                    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+                    uTime: { value: 0 },
+                    uAspect: { value: aspect }
+                }}
+                depthWrite={false}
+                depthTest={false}
+            />
+        </mesh>
     );
 }

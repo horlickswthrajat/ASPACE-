@@ -1,8 +1,13 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, doc, writeBatch } from "firebase/firestore";
 import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config({ path: '../.env' }); // Make sure we hit the frontend root env
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') }); // Make sure we hit the frontend root env
 
 const stripQuotes = (str: string | undefined) => str ? str.replace(/^["']|["']$/g, '') : '';
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLoader } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { TextureLoader, DoubleSide } from 'three';
+import * as THREE from 'three';
 import { useAppContext } from '../../context/AppContext';
 import type { Artwork } from '../../context/AppContext';
 import OrnateFrame from './OrnateFrame';
@@ -9,6 +10,16 @@ import OrnateFrame from './OrnateFrame';
 export default function ArtworkFrame({ artwork, position, onFrameClick }: { artwork: Artwork, position: [number, number, number], onFrameClick: (artwork: Artwork) => void }) {
     const { theme } = useAppContext();
     const [texture, tagTexture] = useLoader(TextureLoader, [artwork.url, '/name_tag_bg.png']);
+    
+    // Optimize textures for WebGL
+    if (texture) {
+        texture.minFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+    }
+    if (tagTexture) {
+        tagTexture.minFilter = THREE.LinearFilter;
+        tagTexture.generateMipmaps = false;
+    }
     const [hovered, setHovered] = useState(false);
 
     return (

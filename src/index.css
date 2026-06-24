@@ -28,16 +28,16 @@
 @layer utilities {
   .neumorphic-glass {
     box-shadow:
-      -8px -8px 16px rgba(255, 255, 255, 0.4),
-      8px 8px 16px rgba(0, 0, 0, 0.08);
+      0 10px 30px rgba(0, 0, 0, 0.15),
+      0 1px 2px rgba(0, 0, 0, 0.05);
     background-blend-mode: overlay;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
   .neumorphic-inset {
     box-shadow:
-      inset 6px 6px 10px rgba(0, 0, 0, 0.06),
-      inset -6px -6px 10px rgba(255, 255, 255, 0.5);
+      inset 6px 6px 10px rgba(0, 0, 0, 0.1),
+      inset -6px -6px 10px rgba(0, 0, 0, 0.05);
     background: transparent;
   }
 }

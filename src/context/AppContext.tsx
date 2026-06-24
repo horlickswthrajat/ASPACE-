@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Theme Types
-export type ThemeId = 'peach_dream' | 'neon_nights' | 'minimalist_white' | 'forest_calm';
+export type ThemeId = 'peach_dream' | 'neon_nights' | 'minimalist_white' | 'forest_calm' | 'dark_theme';
 
 export type FontId = 'playfair' | 'inter' | 'cinzel' | 'pixel' | 'caveat' | 'creepster';
 
@@ -80,6 +80,20 @@ export const THEMES: Record<ThemeId, { name: string, description: string, colors
             light1: '#ffffff',
             light2: '#c9e0cb',
             light3: '#f0f5f1'
+        }
+    },
+    dark_theme: {
+        name: 'Stark Dark',
+        description: 'Deep high-contrast black and white styling.',
+        colors: {
+            background: '#0a0a0a',
+            text: '#ffffff',
+            primary: '#1a1a1a',
+            surface: 'rgba(20, 20, 20, 0.85)',
+            border: 'rgba(255, 255, 255, 0.15)',
+            light1: '#ffffff',
+            light2: '#2a2a2a',
+            light3: '#111111'
         }
     }
 };

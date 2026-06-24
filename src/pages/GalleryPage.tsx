@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
-import { ArrowLeft, Loader2, Star, Info, Settings2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Star, Info, Settings2, LayoutGrid, X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
-import { collection, query, where, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp, addDoc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { getContrastColor } from '../utils/colorUtils';
 import GalleryEnvironment from '../components/gallery/GalleryEnvironment';
 import ArtworkDetailsOverlay from '../components/gallery/ArtworkDetailsOverlay';
@@ -21,6 +22,9 @@ interface RoomData {
     roomType?: string;
     ratingSum: number;
     ratingCount: number;
+    ambientAudio?: string;
+    enableGuestbook?: boolean;
+    coCreatorId?: string;
 }
 
 interface ArtworkData {
@@ -31,9 +35,9 @@ interface ArtworkData {
     userId: string;
     likesCount: number;
     commentsCount: number;
-    url: string; // Required by Artwork
-    likes: number; // Required by Artwork
-    comments: number; // Required by Artwork
+    url: string;
+    likes: number;
+    comments: number;
 }
 
 function LoadingOverlay() {
@@ -57,7 +61,6 @@ function LoadingOverlay() {
                             transition={{ duration: 0.5 }}
                             className="flex flex-col items-center"
                         >
-
                             <div className="w-64 h-2 rounded-full overflow-hidden mb-4" style={{ backgroundColor: theme.surface }}>
                                 <motion.div
                                     className="h-full rounded-full"
@@ -78,8 +81,36 @@ function LoadingOverlay() {
     );
 }
 
+function XRButtonContainer() {
+    const { gl } = useThree();
+    useEffect(() => {
+        const button = VRButton.createButton(gl);
+        button.style.position = 'absolute';
+        button.style.bottom = '80px';
+        button.style.left = '50%';
+        button.style.transform = 'translateX(-50%)';
+        button.style.zIndex = '99';
+        button.style.padding = '12px 24px';
+        button.style.borderRadius = '30px';
+        button.style.background = 'rgba(0,0,0,0.85)';
+        button.style.border = '2px solid #fcaab8';
+        button.style.color = '#fcaab8';
+        button.style.fontWeight = 'black';
+        button.style.fontSize = '12px';
+        button.style.letterSpacing = '0.05em';
+        button.style.textTransform = 'uppercase';
+        button.style.cursor = 'pointer';
+        
+        document.body.appendChild(button);
+        return () => {
+            button.remove();
+        };
+    }, [gl]);
+    return null;
+}
+
 export default function GalleryPage() {
-    const { id: roomId } = useParams(); // URL param is now the roomId
+    const { id: roomId } = useParams();
     const navigate = useNavigate();
     const { theme } = useAppContext();
     const { user } = useAuth();
@@ -98,6 +129,41 @@ export default function GalleryPage() {
     // Exploration State
     const [exploreMode, setExploreMode] = useState(false);
     const [introDone, setIntroDone] = useState(false);
+
+    // Orientation State
+    const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+
+    // Guestbook State
+    const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
+    const [guestbookEntries, setGuestbookEntries] = useState<any[]>([]);
+    const [newGuestbookMessage, setNewGuestbookMessage] = useState('');
+    const [submittingGuestbook, setSubmittingGuestbook] = useState(false);
+
+    // Audio Playback
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsPortrait(window.innerHeight > window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        
+        const lockOrientation = async () => {
+            try {
+                if (window.screen.orientation && (window.screen.orientation as any).lock) {
+                    await (window.screen.orientation as any).lock('landscape');
+                }
+            } catch (err) {
+                console.warn('Orientation lock failed:', err);
+            }
+        };
+        
+        lockOrientation();
+
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const fetchRoomData = async () => {
@@ -118,9 +184,9 @@ export default function GalleryPage() {
                         title: docSnap.data().title || 'Untitled',
                         description: docSnap.data().description || '',
                         imageUrl: docSnap.data().imageUrl,
-                        url: docSnap.data().imageUrl, // GalleryEnvironment expects 'url'
+                        url: docSnap.data().imageUrl,
                         userId: docSnap.data().userId,
-                        frameIndex: docSnap.data().frameIndex, // Required for physical placement
+                        frameIndex: docSnap.data().frameIndex,
                         likesCount: docSnap.data().likesCount || 0,
                         commentsCount: docSnap.data().commentsCount || 0,
                         likes: docSnap.data().likesCount || 0,
@@ -148,6 +214,95 @@ export default function GalleryPage() {
         fetchRoomData();
     }, [roomId, user]);
 
+    // Manage Background Music instantiation
+    useEffect(() => {
+        if (room?.ambientAudio) {
+            if (!audioRef.current) {
+                audioRef.current = new Audio(room.ambientAudio);
+                audioRef.current.loop = true;
+                audioRef.current.volume = 0.5;
+            } else {
+                audioRef.current.src = room.ambientAudio;
+            }
+        } else {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+                setIsPlayingAudio(false);
+            }
+        }
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
+    }, [room?.ambientAudio]);
+
+    // Live Guestbook syncing
+    useEffect(() => {
+        if (!roomId || !isGuestbookOpen) return;
+        const q = query(
+            collection(db, 'guestbook'), 
+            where('roomId', '==', roomId)
+        );
+        const unsub = onSnapshot(q, (snapshot) => {
+            const entries = snapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data(),
+                createdAt: docSnap.data().createdAt?.toDate()
+            }));
+            entries.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+            setGuestbookEntries(entries);
+        });
+        return () => unsub();
+    }, [roomId, isGuestbookOpen]);
+
+    const togglePlayAudio = () => {
+        if (!audioRef.current) return;
+        if (isPlayingAudio) {
+            audioRef.current.pause();
+            setIsPlayingAudio(false);
+        } else {
+            audioRef.current.play().then(() => {
+                setIsPlayingAudio(true);
+            }).catch(err => {
+                console.warn("Audio play blocked:", err);
+            });
+        }
+    };
+
+    const handleSignGuestbook = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !roomId || !newGuestbookMessage.trim() || submittingGuestbook) return;
+        setSubmittingGuestbook(true);
+        try {
+            await addDoc(collection(db, 'guestbook'), {
+                roomId,
+                userId: user.uid,
+                authorName: user.displayName || 'Anonymous',
+                authorPhoto: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
+                message: newGuestbookMessage.trim(),
+                createdAt: serverTimestamp()
+            });
+            setNewGuestbookMessage('');
+        } catch (err) {
+            console.error(err);
+            alert("Failed to sign guestbook.");
+        } finally {
+            setSubmittingGuestbook(false);
+        }
+    };
+
+    const handleDeleteGuestbookEntry = async (entryId: string) => {
+        if (!confirm("Are you sure you want to delete this guestbook entry?")) return;
+        try {
+            await deleteDoc(doc(db, 'guestbook', entryId));
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete entry.");
+        }
+    };
+
     const handleRateRoom = async (rating: number) => {
         if (!user || !roomId || !room || submittingRating) return;
         setSubmittingRating(true);
@@ -158,14 +313,12 @@ export default function GalleryPage() {
             const roomRef = doc(db, 'rooms', roomId);
 
             if (userRating > 0) {
-                // User is updating their existing rating
                 const difference = rating - userRating;
                 await updateDoc(roomRef, {
                     ratingSum: increment(difference)
                 });
                 await updateDoc(ratingRef, { rating, updatedAt: serverTimestamp() });
             } else {
-                // New rating
                 await updateDoc(roomRef, {
                     ratingSum: increment(rating),
                     ratingCount: increment(1)
@@ -176,10 +329,8 @@ export default function GalleryPage() {
                     rating,
                     createdAt: serverTimestamp()
                 });
-                // Optimistically update local room stats
                 setRoom(prev => prev ? { ...prev, ratingCount: prev.ratingCount + 1 } : prev);
 
-                // Send Notification
                 if (room.userId && room.userId !== user.uid) {
                     await addDoc(collection(db, 'notifications'), {
                         ownerId: room.userId,
@@ -196,7 +347,6 @@ export default function GalleryPage() {
                 }
             }
 
-            // Optimistically update local UI rating sum
             setRoom(prev => prev ? { ...prev, ratingSum: prev.ratingSum + (rating - userRating) } : prev);
             setUserRating(rating);
         } catch (error) {
@@ -227,13 +377,34 @@ export default function GalleryPage() {
         >
             {/* Overlay UI */}
             <div className="absolute inset-x-0 top-8 px-8 flex justify-between items-start z-10 pointer-events-none">
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-110 shadow-lg border-2 z-20"
-                    style={{ backgroundColor: `${theme.surface}99`, color: theme.text, borderColor: theme.border }}
-                >
-                    <ArrowLeft size={24} />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-110 shadow-lg border-2 z-20 cursor-pointer"
+                        style={{ backgroundColor: `${theme.surface}99`, color: theme.text, borderColor: theme.border }}
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+
+                    {/* Audio control button */}
+                    {room?.ambientAudio && (
+                        <button
+                            onClick={togglePlayAudio}
+                            className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-110 shadow-lg border-2 z-20 cursor-pointer"
+                            style={{ backgroundColor: `${theme.surface}99`, color: theme.text, borderColor: theme.border }}
+                            title={isPlayingAudio ? "Mute Background Music" : "Play Background Music"}
+                        >
+                            {isPlayingAudio ? (
+                                <span className="relative flex h-4 w-4 items-center justify-center">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fcaab8] opacity-75"></span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#fcaab8]"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                                </span>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                            )}
+                        </button>
+                    )}
+                </div>
 
                 {room && (
                     <div className="pointer-events-auto flex flex-col items-end gap-4">
@@ -274,11 +445,11 @@ export default function GalleryPage() {
                                             onClick={() => handleRateRoom(star)}
                                             onMouseEnter={() => setHoverRating(star)}
                                             onMouseLeave={() => setHoverRating(0)}
-                                            className="transition-transform hover:scale-125 disabled:opacity-50"
+                                            className="transition-transform hover:scale-125 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Star
-                                                size={28}
-                                                className={(hoverRating || userRating) >= star ? 'text-[#f594a6] fill-[#f594a6]' : 'text-gray-300'}
+                                                size={ star <= (hoverRating || userRating) ? 28 : 24 }
+                                                className={(hoverRating || userRating) >= star ? 'text-[#fcaab8] fill-[#fcaab8]' : 'text-gray-300'}
                                             />
                                         </button>
                                     ))}
@@ -288,13 +459,13 @@ export default function GalleryPage() {
                                 </span>
                             </motion.div>
                         )}
-                        {/* Edit Room Button (Owner Only) */}
-                        {user && room.userId === user.uid && !selectedArtwork && (
+                        {/* Edit Room Button (Owner or Co-Creator) */}
+                        {user && (room.userId === user.uid || room.coCreatorId === user.uid) && !selectedArtwork && (
                             <motion.button
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 onClick={() => setIsManageGalleryModalOpen(true)}
-                                className="pointer-events-auto backdrop-blur-md px-6 py-3 rounded-full shadow-xl border flex items-center gap-2 font-bold transition-transform hover:scale-105"
+                                className="pointer-events-auto backdrop-blur-md px-6 py-3 rounded-full shadow-xl border flex items-center gap-2 font-bold transition-transform hover:scale-105 cursor-pointer"
                                 style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }}
                             >
                                 <Settings2 size={20} style={{ color: theme.primary }} />
@@ -307,7 +478,7 @@ export default function GalleryPage() {
 
             {/* Intro / Explore Overlay */}
             <AnimatePresence>
-                {!exploreMode && !selectedArtwork && introDone && (
+                {!exploreMode && !selectedArtwork && !isGuestbookOpen && introDone && (
                     <motion.div
                         className="absolute inset-0 z-10 flex items-center justify-center p-8 pointer-events-none"
                         initial={{ opacity: 0 }}
@@ -317,8 +488,15 @@ export default function GalleryPage() {
                         <div className="flex flex-col items-center gap-6 mt-48">
                             <button
                                 id="explore-button"
-                                onClick={() => setExploreMode(true)}
-                                className="pointer-events-auto border-4 px-12 py-5 rounded-full font-black text-2xl shadow-[0_10px_40px_rgba(252,170,184,0.3)] transition-all hover:scale-105 hover:brightness-110 flex items-center gap-3"
+                                onClick={() => {
+                                    setExploreMode(true);
+                                    if (audioRef.current) {
+                                        audioRef.current.play().then(() => {
+                                            setIsPlayingAudio(true);
+                                        }).catch(e => console.warn(e));
+                                    }
+                                }}
+                                className="pointer-events-auto border-4 px-12 py-5 rounded-full font-black text-2xl shadow-[0_10px_40px_rgba(252,170,184,0.3)] transition-all hover:scale-105 hover:brightness-110 flex items-center gap-3 cursor-pointer"
                                 style={{
                                     backgroundColor: theme.primary,
                                     borderColor: theme.border,
@@ -335,7 +513,7 @@ export default function GalleryPage() {
                 )}
             </AnimatePresence>
 
-            {/* Interaction Overlay */}
+            {/* Interaction Overlays */}
             <AnimatePresence>
                 {selectedArtwork && (
                     <ArtworkDetailsOverlay
@@ -346,19 +524,186 @@ export default function GalleryPage() {
                         }}
                     />
                 )}
+
+                {/* Mobile Orientation Locked Overlay */}
+                {isPortrait && (window.innerWidth < 1024) && (
+                    <motion.div
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-8 backdrop-blur-[40px] text-center"
+                        style={{ background: `radial-gradient(circle at center, ${theme.primary}4D, ${theme.background}FB)` }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="relative mb-12"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                        >
+                            <motion.div
+                                animate={{ rotate: 90 }}
+                                transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut", repeatDelay: 1 }}
+                                className="w-20 h-32 border-[3px] rounded-[2rem] relative shadow-2xl"
+                                style={{ borderColor: `${theme.text}40`, backgroundColor: `${theme.surface}33` }}
+                            >
+                                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-8 h-1.5 rounded-full" style={{ backgroundColor: `${theme.text}20` }} />
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full" style={{ backgroundColor: `${theme.text}20` }} />
+                            </motion.div>
+                            
+                            <motion.div 
+                                className="absolute -top-4 -right-4 w-8 h-8 rounded-full blur-xl"
+                                animate={{ opacity: [0.2, 0.5, 0.2] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                style={{ backgroundColor: theme.light1 }} 
+                            />
+                        </motion.div>
+
+                        <h2 className="text-4xl font-black mb-6 tracking-tight leading-tight" style={{ color: theme.text }}>
+                            Rotate for <br/><span style={{ color: theme.light2 }}>Exhibition Mode</span>
+                        </h2>
+                        <p className="font-bold text-lg opacity-80 max-w-sm mb-12" style={{ color: theme.text }}>
+                            Step into the full immersive 3D experience by holding your device horizontally.
+                        </p>
+                        
+                        <div className="flex flex-col gap-4 w-full max-w-xs">
+                            <button
+                                onClick={() => {
+                                    if (document.documentElement.requestFullscreen) {
+                                        document.documentElement.requestFullscreen();
+                                    }
+                                }}
+                                className="w-full px-8 py-5 rounded-3xl font-black text-xl shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
+                                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                            >
+                                <LayoutGrid size={24} />
+                                Enter ArtSpace
+                            </button>
+                            
+                            <p className="text-xs font-bold uppercase tracking-widest opacity-40 mt-4" style={{ color: theme.text }}>
+                                Best experienced on larger screens
+                            </p>
+                        </div>
+
+                        <div className="absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full -mr-48 -mt-48 opacity-20 pointer-events-none" style={{ backgroundColor: theme.light1 }} />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 blur-[120px] rounded-full -ml-48 -mb-48 opacity-20 pointer-events-none" style={{ backgroundColor: theme.light2 }} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Guestbook Overlay Modal */}
+            <AnimatePresence>
+                {isGuestbookOpen && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8 bg-black/75 backdrop-blur-md">
+                        <div className="absolute inset-0" onClick={() => { setIsGuestbookOpen(false); setExploreMode(true); }} />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 30 }}
+                            className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-[2.5rem] p-8 relative z-[70] border shadow-2xl overflow-hidden text-gray-800"
+                            style={{
+                                background: 'linear-gradient(to bottom, #f7f1e3, #ebdcb9)',
+                                borderColor: '#c4a46a',
+                                fontFamily: 'Georgia, serif'
+                            }}
+                        >
+                            <div className="flex justify-between items-center mb-6 pb-4 border-b border-dashed border-[#c4a46a]">
+                                <div>
+                                    <h3 className="text-3xl font-bold text-[#5c4033] italic">Exhibition Guestbook</h3>
+                                    <p className="text-xs text-[#8a6e53] font-sans font-black uppercase tracking-wider mt-1">Leave a warm trace of your presence</p>
+                                </div>
+                                <button
+                                    onClick={() => { setIsGuestbookOpen(false); setExploreMode(true); }}
+                                    className="p-2.5 bg-[#8b0000] hover:bg-[#a60000] text-white rounded-full transition-colors cursor-pointer"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto pr-2 mb-6 space-y-4 custom-scrollbar font-sans">
+                                {guestbookEntries.length === 0 ? (
+                                    <div className="text-center py-12 opacity-60 italic text-lg text-[#5c4033] font-serif">
+                                        No signatures yet. Be the first to leave a message!
+                                    </div>
+                                ) : (
+                                    guestbookEntries.map(entry => (
+                                        <div key={entry.id} className="bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-[#ebdcb9] flex gap-3 items-start relative group shadow-sm transition-all hover:bg-white/85">
+                                            <img
+                                                src={entry.authorPhoto}
+                                                alt="Author"
+                                                className="w-10 h-10 rounded-full border border-[#ebdcb9] bg-[#f7f1e3]"
+                                            />
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="font-bold text-sm text-[#5c4033]">{entry.authorName}</span>
+                                                    <span className="text-[10px] text-gray-400 font-semibold">
+                                                        {entry.createdAt ? entry.createdAt.toLocaleDateString() : ''}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-700 leading-relaxed font-serif italic">"{entry.message}"</p>
+                                            </div>
+
+                                            {user && (user.uid === entry.userId || user.uid === room?.userId) && (
+                                                <button
+                                                    onClick={() => handleDeleteGuestbookEntry(entry.id)}
+                                                    className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                                    title="Delete signature"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {user ? (
+                                <form onSubmit={handleSignGuestbook} className="flex flex-col gap-3 font-sans border-t border-dashed border-[#c4a46a] pt-4">
+                                    <textarea
+                                        value={newGuestbookMessage}
+                                        onChange={(e) => setNewGuestbookMessage(e.target.value)}
+                                        placeholder="Write your note here..."
+                                        maxLength={250}
+                                        rows={2}
+                                        required
+                                        className="w-full bg-white/70 border border-[#ebdcb9] focus:border-[#c4a46a] rounded-2xl py-3 px-4 outline-none resize-none font-serif italic text-base transition-all focus:bg-white"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={submittingGuestbook || !newGuestbookMessage.trim()}
+                                        className="w-full py-3.5 rounded-full font-bold text-sm tracking-wide text-white transition-all transform hover:scale-[1.01] active:scale-95 disabled:opacity-50 cursor-pointer"
+                                        style={{ backgroundColor: '#5c4033' }}
+                                    >
+                                        {submittingGuestbook ? 'Signing...' : 'Sign Guestbook'}
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="text-center font-sans text-xs font-semibold opacity-60 mt-4">
+                                    Please log in to sign the guestbook.
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
             </AnimatePresence>
 
             {/* 3D Canvas Context */}
             <div className={`absolute inset-0 transition-all duration-700 ${selectedArtwork ? 'scale-[1.02] filter blur-sm pointer-events-none' : ''}`}>
-                <Canvas camera={{ position: [0, 1.8, 5], fov: 60 }} shadows>
+                <Canvas camera={{ position: [0, 1.8, 5], fov: 60 }} shadows dpr={[1, 2]} onCreated={({ gl }) => { gl.xr.enabled = true; }}>
                     <React.Suspense fallback={<LoadingOverlay />}>
                         <LoadingOverlay />
                         <GalleryEnvironment
                             artworks={artworks}
                             roomType={room?.roomType || 'atrium'}
+                            enableGuestbook={room?.enableGuestbook || false}
+                            onGuestbookClick={() => {
+                                setExploreMode(false);
+                                if (document.pointerLockElement) {
+                                    document.exitPointerLock();
+                                }
+                                setIsGuestbookOpen(true);
+                            }}
                             onArtworkClick={(art) => {
                                 setExploreMode(false);
-                                // To ensure lock drops before state changes (browser dependent)
                                 if (document.pointerLockElement) {
                                     document.exitPointerLock();
                                 }
@@ -369,14 +714,15 @@ export default function GalleryPage() {
                             setIntroDone={setIntroDone}
                             onUnlock={() => setExploreMode(false)}
                         />
+                        <XRButtonContainer />
                     </React.Suspense>
                 </Canvas>
             </div>
 
             {/* Guide overlay bottom center */}
-            <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none transition-opacity duration-500 ${selectedArtwork ? 'opacity-0' : 'opacity-100'}`}>
+            <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none transition-opacity duration-500 ${selectedArtwork || isGuestbookOpen ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="px-6 py-3 rounded-full backdrop-blur-md border shadow-lg transition-colors"
-                    style={{ backgroundColor: `${theme.primary}B3`, borderColor: theme.border, color: theme.text }}>
+                     style={{ backgroundColor: `${theme.primary}B3`, borderColor: theme.border, color: theme.text }}>
                     <p className="text-sm font-semibold tracking-wide">Click and drag to look around. Click artworks to interact.</p>
                 </div>
             </div>

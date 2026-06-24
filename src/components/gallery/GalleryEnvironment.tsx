@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useTexture, useGLTF } from '@react-three/drei';
+import { useTexture, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Artwork } from '../../context/AppContext';
 import ArtworkFrame from './ArtworkFrame';
@@ -55,7 +55,9 @@ export default function GalleryEnvironment({
     introDone,
     setIntroDone,
     onUnlock,
-    roomType = 'atrium'
+    roomType = 'atrium',
+    enableGuestbook = false,
+    onGuestbookClick
 }: {
     artworks: Artwork[],
     onArtworkClick: (art: Artwork) => void;
@@ -64,6 +66,8 @@ export default function GalleryEnvironment({
     setIntroDone: (val: boolean) => void;
     onUnlock: () => void;
     roomType?: string;
+    enableGuestbook?: boolean;
+    onGuestbookClick?: () => void;
 }) {
     const roomLength = 30; // Longer room for depth
     const roomWidth = 20;
@@ -486,6 +490,80 @@ export default function GalleryEnvironment({
             <group position={[0, 0, -2]}>
                 <TreeCenterpiece />
             </group>
+
+            {/* --- Guestbook Table --- */}
+            {enableGuestbook && (
+                <group position={[4, 0, 6]} rotation={[0, -0.4, 0]}>
+                    {/* Desk Tabletop */}
+                    <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+                        <boxGeometry args={[1.6, 0.08, 1.0]} />
+                        <meshStandardMaterial color="#4e3629" roughness={0.6} />
+                    </mesh>
+                    {/* Drawer detail */}
+                    <mesh position={[0, 0.8, 0.45]} castShadow>
+                        <boxGeometry args={[0.6, 0.1, 0.08]} />
+                        <meshStandardMaterial color="#362217" roughness={0.8} />
+                    </mesh>
+                    {/* Legs */}
+                    <mesh position={[-0.7, 0.45, -0.4]} castShadow>
+                        <cylinderGeometry args={[0.04, 0.04, 0.9]} />
+                        <meshStandardMaterial color="#2d1d14" roughness={0.7} />
+                    </mesh>
+                    <mesh position={[0.7, 0.45, -0.4]} castShadow>
+                        <cylinderGeometry args={[0.04, 0.04, 0.9]} />
+                        <meshStandardMaterial color="#2d1d14" roughness={0.7} />
+                    </mesh>
+                    <mesh position={[-0.7, 0.45, 0.4]} castShadow>
+                        <cylinderGeometry args={[0.04, 0.04, 0.9]} />
+                        <meshStandardMaterial color="#2d1d14" roughness={0.7} />
+                    </mesh>
+                    <mesh position={[0.7, 0.45, 0.4]} castShadow>
+                        <cylinderGeometry args={[0.04, 0.04, 0.9]} />
+                        <meshStandardMaterial color="#2d1d14" roughness={0.7} />
+                    </mesh>
+
+                    {/* Guestbook Book Object */}
+                    <group 
+                        position={[0, 0.95, 0]} 
+                        rotation={[0, 0.2, 0]} 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (onGuestbookClick) onGuestbookClick();
+                        }}
+                        onPointerOver={(e) => {
+                            e.stopPropagation();
+                            document.body.style.cursor = 'pointer';
+                        }}
+                        onPointerOut={(e) => {
+                            e.stopPropagation();
+                            document.body.style.cursor = 'default';
+                        }}
+                    >
+                        {/* Book Cover */}
+                        <mesh position={[0, 0.01, 0]} castShadow>
+                            <boxGeometry args={[0.52, 0.03, 0.38]} />
+                            <meshStandardMaterial color="#8b0000" roughness={0.4} />
+                        </mesh>
+                        {/* Pages */}
+                        <mesh position={[0, 0.025, 0]} castShadow>
+                            <boxGeometry args={[0.5, 0.02, 0.36]} />
+                            <meshStandardMaterial color="#fffdd0" roughness={0.6} />
+                        </mesh>
+                        {/* Spine Line */}
+                        <mesh position={[0, 0.036, 0]}>
+                            <boxGeometry args={[0.02, 0.005, 0.36]} />
+                            <meshBasicMaterial color="#333" />
+                        </mesh>
+
+                        {/* Floating Label */}
+                        <Html position={[0, 0.4, 0]} center distanceFactor={8}>
+                            <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 select-none pointer-events-none whitespace-nowrap">
+                                <span className="text-white font-black text-xs uppercase tracking-widest">Sign Guestbook</span>
+                            </div>
+                        </Html>
+                    </group>
+                </group>
+            )}
 
             {/* --- Artworks (12 Fixed Slots) --- */}
             {Array.from({ length: 12 }).map((_, i) => {
