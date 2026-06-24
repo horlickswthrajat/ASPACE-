@@ -1,10 +1,10 @@
 import React, { useState, useRef, Suspense } from 'react';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Loader2, ArrowRight, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { Loader2, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../lib/firebase';
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { compressImage } from '../../utils/imageCompression';
 import { getContrastColor } from '../../utils/colorUtils';
 import ImageEditorModal from '../ImageEditorModal';
