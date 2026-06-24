@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
-import { Search, Home, Bell, Mail, User, LayoutGrid, LogOut, Users, Settings, Loader2 } from 'lucide-react';
+import { Search, Home, Bell, Mail, User, LayoutGrid, LogOut, Users, Settings, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ProfileModal from '../components/ProfileModal';
 import SettingsModal from '../components/SettingsModal';
@@ -16,6 +16,7 @@ import { useAppContext } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { getContrastColor } from '../utils/colorUtils';
 
 import PublicProfileView from '../components/dashboard/PublicProfileView';
 
@@ -57,6 +58,37 @@ export default function DashboardPage() {
     // UI State
     const [activeTab, setActiveTab] = useState('Home');
     const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
+
+    // PWA Install Prompt State
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setShowInstallBtn(true);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setShowInstallBtn(false);
+        }
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt as EventListener);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        setDeferredPrompt(null);
+        setShowInstallBtn(false);
+    };
     const [initialMessageUserId, setInitialMessageUserId] = useState<string | null>(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -222,6 +254,19 @@ export default function DashboardPage() {
                         );
                     })}
                 </nav>
+                {showInstallBtn && (
+                    <motion.button
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleInstallClick}
+                        className="mb-3 flex items-center justify-center gap-2 w-full py-3.5 rounded-[1.5rem] font-black text-md transition-all shadow-lg hover:scale-105 border border-transparent cursor-pointer"
+                        style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                    >
+                        <Download size={18} strokeWidth={2.5} />
+                        Download App
+                    </motion.button>
+                )}
 
                 <motion.button
                     variants={itemVariants}
@@ -280,6 +325,33 @@ export default function DashboardPage() {
                         <img src={profile.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'} alt="User Profile" className="w-full h-full object-cover" />
                     </motion.div>
                 </header>
+
+                {/* PWA Mobile Banner */}
+                {showInstallBtn && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="lg:hidden mx-4 mb-4 p-4 rounded-3xl flex items-center justify-between shadow-lg border"
+                        style={{ backgroundColor: theme.surface, borderColor: theme.border }}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm" style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}>
+                                A
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm" style={{ color: theme.text }}>Art Space App</h4>
+                                <p className="text-xs opacity-75 font-semibold" style={{ color: theme.text }}>Install for full-screen experience</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleInstallClick}
+                            className="px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                            style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                        >
+                            Install
+                        </button>
+                    </motion.div>
+                )}
 
                 {/* Main View Area */}
                 {activeTab === 'Home' && <HomeView containerVariants={containerVariants} itemVariants={itemVariants} />}
