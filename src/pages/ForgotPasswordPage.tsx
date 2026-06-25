@@ -4,11 +4,12 @@ import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
+import Logo from '../components/Logo';
 
 export default function ForgotPasswordPage() {
     const navigate = useNavigate();
     const [isSubmitted, setIsSubmitted] = useState(false);
-    const { theme } = useAppContext();
+    const { theme, logoId } = useAppContext();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,7 +45,10 @@ export default function ForgotPasswordPage() {
                     <ArrowLeft size={24} />
                 </button>
 
-                <h2 className="text-3xl font-bold mb-4 mt-4 text-center tracking-tight" style={{ color: theme.text }}>Recover Password</h2>
+                <div className="flex flex-col items-center gap-3 mb-4 mt-6">
+                    <Logo id={logoId} size={64} animated={true} />
+                    <h2 className="text-3xl font-bold text-center tracking-tight" style={{ color: theme.text }}>Recover Password</h2>
+                </div>
 
                 {!isSubmitted ? (
                     <>

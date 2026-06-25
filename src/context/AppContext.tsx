@@ -134,6 +134,8 @@ export interface Profile {
     bio: string;
 }
 
+export type LogoId = 'prism' | 'canvas' | 'spark' | 'frame' | 'portal';
+
 export interface UserContextType {
     name: string;
     avatarUrl: string;
@@ -141,8 +143,10 @@ export interface UserContextType {
     theme: ThemeColors;
     fontId: FontId;
     fontFamily: string;
+    logoId: LogoId;
     setThemeId: (theme: ThemeId) => void;
     setFontId: (font: FontId) => void;
+    setLogoId: (logo: LogoId) => void;
     setName: (name: string) => void;
     setAvatarUrl: (url: string) => void;
 
@@ -159,8 +163,10 @@ const defaultContext: UserContextType = {
     theme: THEMES.peach_dream.colors,
     fontId: 'playfair',
     fontFamily: FONTS.playfair.family,
+    logoId: 'prism',
     setThemeId: () => { },
     setFontId: () => { },
+    setLogoId: () => { },
     setName: () => { },
     setAvatarUrl: () => { },
     myGallery: { id: 'mine', userId: 'Creator', name: 'My Gallery', artworks: [] },
@@ -177,6 +183,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [avatarUrl, setAvatarUrl] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');
     const [themeId, setThemeId] = useState<ThemeId>('peach_dream');
     const [fontId, setFontId] = useState<FontId>('playfair');
+    const [logoId, setLogoId] = useState<LogoId>('prism');
 
     // Default Mock Gallery
     const [myGallery, setMyGallery] = useState<Gallery>({
@@ -195,12 +202,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const storedAvatar = localStorage.getItem('artspace_user_avatar');
         const storedTheme = localStorage.getItem('artspace_theme') as ThemeId;
         const storedFont = localStorage.getItem('artspace_font') as FontId;
+        const storedLogo = localStorage.getItem('artspace_logo') as LogoId;
         const storedGallery = localStorage.getItem('artspace_gallery');
 
         if (storedName) setName(storedName);
         if (storedAvatar) setAvatarUrl(storedAvatar);
         if (storedTheme && THEMES[storedTheme]) setThemeId(storedTheme);
         if (storedFont && FONTS[storedFont]) setFontId(storedFont);
+        if (storedLogo) setLogoId(storedLogo);
         if (storedGallery) {
             try {
                 setMyGallery(JSON.parse(storedGallery));
@@ -235,6 +244,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('artspace_font', newFont);
     };
 
+    const handleSetLogo = (newLogo: LogoId) => {
+        setLogoId(newLogo);
+        localStorage.setItem('artspace_logo', newLogo);
+    };
+
     const addArtwork = (url: string, title: string) => {
         const newArt = { id: Date.now().toString(), url, title, likes: 0, comments: 0 };
         const updatedGallery = { ...myGallery, artworks: [...myGallery.artworks, newArt] };
@@ -256,8 +270,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             theme: THEMES[themeId].colors,
             fontId,
             fontFamily: FONTS[fontId].family,
+            logoId,
             setThemeId: handleSetTheme,
             setFontId: handleSetFont,
+            setLogoId: handleSetLogo,
             setName: handleSetName,
             setAvatarUrl: handleSetAvatar,
             myGallery,

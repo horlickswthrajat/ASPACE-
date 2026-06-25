@@ -19,6 +19,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getContrastColor } from '../utils/colorUtils';
 
 import PublicProfileView from '../components/dashboard/PublicProfileView';
+import Logo from '../components/Logo';
 
 const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -42,7 +43,7 @@ const itemVariants: Variants = {
 
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const { theme } = useAppContext();
+    const { theme, logoId } = useAppContext();
     const { user, profile, loading, signOut, updateUserProfile } = useAuth();
 
     useEffect(() => {
@@ -195,11 +196,10 @@ export default function DashboardPage() {
             >
                 <motion.div variants={itemVariants} className="flex items-center gap-3 mb-12 px-2 justify-center xl:justify-start">
                     <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer shadow-lg transition-colors duration-500 flex-shrink-0"
+                        className="cursor-pointer transition-transform duration-300 hover:scale-105 flex-shrink-0"
                         onClick={() => navigate('/')}
-                        style={{ backgroundColor: theme.text, color: theme.background }}
                     >
-                        A
+                        <Logo id={logoId} size={40} animated={true} />
                     </div>
                     <span className="text-2xl font-black tracking-tight transition-colors duration-500 hidden xl:block" style={{ color: theme.text, fontFamily: "'Caveat', cursive" }}>ArtSpace</span>
                 </motion.div>
@@ -307,7 +307,8 @@ export default function DashboardPage() {
                     style={{ backgroundColor: `${theme.surface}B3`, borderColor: theme.border }}
                 >
                     <div className="flex items-center gap-2" onClick={() => setActiveTab('Home')}>
-                        <span className="text-3xl font-black tracking-tight cursor-pointer" style={{ color: theme.text, fontFamily: "'Caveat', cursive" }}>ArtSpace</span>
+                        <Logo id={logoId} size={30} animated={true} />
+                        <span className="text-2xl font-black tracking-tight cursor-pointer" style={{ color: theme.text, fontFamily: "'Caveat', cursive" }}>ArtSpace</span>
                     </div>
                     <div className="flex items-center gap-3">
                         {/* Notifications */}

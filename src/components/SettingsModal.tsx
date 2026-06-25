@@ -1,46 +1,59 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Palette, Type } from 'lucide-react';
+import { Check, Palette, Type, Sparkles } from 'lucide-react';
 import { THEMES, FONTS, useAppContext } from '../context/AppContext';
-import type { ThemeId, FontId } from '../context/AppContext';
+import type { ThemeId, FontId, LogoId } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
+import Logo from './Logo';
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-type Tab = 'theme' | 'typography';
+type Tab = 'theme' | 'typography' | 'logo';
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-    const { themeId, setThemeId, fontId, setFontId } = useAppContext();
+    const { themeId, setThemeId, fontId, setFontId, logoId, setLogoId } = useAppContext();
     const [activeTab, setActiveTab] = useState<Tab>('theme');
     const [previewThemeId, setPreviewThemeId] = useState<ThemeId>(themeId);
     const [previewFontId, setPreviewFontId] = useState<FontId>(fontId);
+    const [previewLogoId, setPreviewLogoId] = useState<LogoId>(logoId);
 
     // Reset previews when opened
     React.useEffect(() => {
         if (isOpen) {
             setPreviewThemeId(themeId);
             setPreviewFontId(fontId);
+            setPreviewLogoId(logoId);
         }
-    }, [isOpen, themeId, fontId]);
+    }, [isOpen, themeId, fontId, logoId]);
 
     const handleApply = () => {
         setThemeId(previewThemeId);
         setFontId(previewFontId);
+        setLogoId(previewLogoId);
         onClose();
     };
 
     const handleCancel = () => {
         setPreviewThemeId(themeId);
         setPreviewFontId(fontId);
+        setPreviewLogoId(logoId);
         onClose();
     };
 
     if (!isOpen) return null;
 
     const previewColors = THEMES[previewThemeId].colors;
+
+    const logoOptions: { id: LogoId; name: string; desc: string }[] = [
+        { id: 'prism', name: 'Dimensional Prism', desc: 'Isometric overlapping glassmorphic planes representing 3D virtual art spaces.' },
+        { id: 'canvas', name: 'Infinite Canvas', desc: 'Overlapping frames rotated in sequence, creating a depth tunnel portal.' },
+        { id: 'spark', name: 'Creative Spark', desc: 'A sleek, four-point abstract star representing the initial spark of artistic inspiration.' },
+        { id: 'frame', name: 'Golden-Ratio Frame', desc: 'A minimalist geometric outline of a square enclosing a dotted canvas guide.' },
+        { id: 'portal', name: 'Gallery Portal', desc: 'Concentric wireframe rings drawing the viewer into deep virtual dimensions.' }
+    ];
 
     return (
         <AnimatePresence>
@@ -74,7 +87,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
                     {/* Tabs */}
                     <div className="flex gap-4 w-full mb-8 border-b-2" style={{ borderColor: previewColors.border }}>
-                        {(['theme', 'typography'] as Tab[]).map(tab => (
+                        {(['theme', 'typography', 'logo'] as Tab[]).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -84,7 +97,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     color: previewColors.text
                                 }}
                             >
-                                {tab === 'theme' ? <Palette size={20} /> : <Type size={20} />}
+                                {tab === 'theme' && <Palette size={20} />}
+                                {tab === 'typography' && <Type size={20} />}
+                                {tab === 'logo' && <Sparkles size={20} />}
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </button>
                         ))}
@@ -174,6 +189,60 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                 })}
                             </div>
                         )}
+
+                        {activeTab === 'logo' && (
+                            <div className="flex flex-col gap-5">
+                                <div className="p-4 rounded-2xl bg-white/5 border text-xs font-semibold leading-relaxed mb-2" style={{ borderColor: previewColors.border }}>
+                                    💡 <span className="font-bold">Instructions:</span> Select a logo option below to preview it. Once you find a design you like, click <span className="italic">"Save Settings"</span> at the bottom to approve and apply it permanently as the application logo. The logo will not contain the brand name.
+                                </div>
+                                {logoOptions.map(option => {
+                                    const isSelected = previewLogoId === option.id;
+                                    return (
+                                        <motion.div
+                                            key={option.id}
+                                            onClick={() => setPreviewLogoId(option.id)}
+                                            whileHover={{ scale: 1.01 }}
+                                            className={`flex items-center gap-6 p-4 rounded-3xl cursor-pointer border-2 transition-all ${isSelected ? 'shadow-lg' : 'opacity-70 hover:opacity-100'}`}
+                                            style={{
+                                                backgroundColor: isSelected ? `${previewColors.primary}20` : 'transparent',
+                                                borderColor: isSelected ? previewColors.primary : previewColors.border
+                                            }}
+                                        >
+                                            {/* Logo Preview Container */}
+                                            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-black/25 shrink-0 border border-white/5">
+                                                <Logo id={option.id} size={54} animated={isSelected} />
+                                            </div>
+
+                                            {/* Logo Description */}
+                                            <div className="flex-1 flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-xl font-bold">{option.name}</h3>
+                                                    {logoId === option.id && (
+                                                        <span className="text-xs px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-green-500/20 text-green-400">
+                                                            Approved
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm opacity-75 font-medium leading-normal">{option.desc}</p>
+                                            </div>
+
+                                            {/* Checkbox indicator */}
+                                            <button
+                                                type="button"
+                                                className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all shrink-0 cursor-pointer"
+                                                style={{
+                                                    borderColor: isSelected ? previewColors.primary : previewColors.text,
+                                                    backgroundColor: isSelected ? previewColors.primary : 'transparent',
+                                                    color: isSelected ? getContrastColor(previewColors.primary) : previewColors.text
+                                                }}
+                                            >
+                                                {isSelected && <Check size={20} strokeWidth={3} />}
+                                            </button>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex gap-4 w-full mt-auto">
@@ -194,7 +263,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                             style={{
                                 backgroundColor: previewColors.primary,
                                 color: getContrastColor(previewColors.primary)
-                            }}
+                              }}
                         >
                             Save Settings
                         </button>

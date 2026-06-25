@@ -691,7 +691,12 @@ export default function GalleryPage() {
 
             {/* 3D Canvas Context */}
             <div className={`absolute inset-0 transition-all duration-700 ${selectedArtwork ? 'scale-[1.02] filter blur-sm pointer-events-none' : ''}`}>
-                <Canvas camera={{ position: [0, 1.8, 5], fov: 60 }} shadows dpr={[1, 2]} onCreated={({ gl }) => { gl.xr.enabled = true; }}>
+                <Canvas 
+                    camera={{ position: [0, 1.8, 5], fov: 60 }} 
+                    shadows={!isMobile} 
+                    dpr={isMobile ? 1 : [1, 1.5]} 
+                    onCreated={({ gl }) => { gl.xr.enabled = true; }}
+                >
                     <React.Suspense fallback={<LoadingOverlay />}>
                         <LoadingOverlay />
                         <GalleryEnvironment

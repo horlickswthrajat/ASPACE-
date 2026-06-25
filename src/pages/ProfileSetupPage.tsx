@@ -4,6 +4,7 @@ import { RefreshCw, UserCheck, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
+import Logo from '../components/Logo';
 import ImageEditorModal from '../components/ImageEditorModal';
 import { useAuth } from '../context/AuthContext';
 import { getCloudinaryConfig } from '../utils/cloudinaryUtils';
@@ -15,7 +16,7 @@ const AVATAR_SEEDS = [
 
 export default function ProfileSetupPage() {
     const navigate = useNavigate();
-    const { setAvatarUrl, setName, theme } = useAppContext();
+    const { setAvatarUrl, setName, theme, logoId } = useAppContext();
     const { user, profile, loading, updateUserProfile } = useAuth();
     const [name, setDisplayName] = useState('');
     const [seedIndex, setSeedIndex] = useState(0);
@@ -125,8 +126,9 @@ export default function ProfileSetupPage() {
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 40px rgba(0, 0, 0, 0.1)'
                 }}
             >
-                <div className="text-center mb-8 relative z-10">
-                    <h2 className="text-3xl font-bold tracking-tight mb-2" style={{ color: theme.text }}>Create Your Profile</h2>
+                <div className="text-center mb-8 relative z-10 flex flex-col items-center gap-3 animate-pulse">
+                    <Logo id={logoId} size={64} animated={true} />
+                    <h2 className="text-3xl font-bold tracking-tight" style={{ color: theme.text }}>Create Your Profile</h2>
                     <p className="font-medium" style={{ color: theme.text, opacity: 0.7 }}>Customize how others see you in ArtSpace.</p>
                 </div>
 

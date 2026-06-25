@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
 import { getContrastColor } from '../utils/colorUtils';
+import Logo from '../components/Logo';
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedDomain, setCopiedDomain] = useState(false);
-    const { theme } = useAppContext();
+    const { theme, logoId } = useAppContext();
 
     useEffect(() => {
         if (user) {
@@ -125,7 +126,10 @@ export default function LoginPage() {
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 40px rgba(0, 0, 0, 0.1)'
                 }}
             >
-                <h2 className="text-4xl font-bold mb-8 text-center tracking-tight" style={{ color: theme.text }}>ArtSpace</h2>
+                <div className="flex flex-col items-center gap-3 mb-8">
+                    <Logo id={logoId} size={64} animated={true} />
+                    <h2 className="text-4xl font-bold text-center tracking-tight" style={{ color: theme.text }}>ArtSpace</h2>
+                </div>
 
                 <form className="flex flex-col gap-5" onSubmit={handleLogin}>
                     <div className="relative group">

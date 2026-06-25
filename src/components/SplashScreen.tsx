@@ -1,14 +1,14 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAppContext } from '../context/AppContext';
+import Logo from './Logo';
 
 interface SplashScreenProps {
     onComplete: () => void;
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
-    // The automatic timeout has been replaced by the "Explore Art" button click
-
-
+    const { logoId } = useAppContext();
 
     return (
         <AnimatePresence>
@@ -22,6 +22,15 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/20 pointer-events-none" />
 
                 <div className="relative z-20 text-center flex flex-col items-center">
+                    <motion.div
+                        className="mb-6 flex justify-center"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.1, duration: 1.0, type: 'spring' }}
+                    >
+                        <Logo id={logoId} size={100} animated={true} />
+                    </motion.div>
+
                     <motion.h1
                         className="text-6xl md:text-8xl font-bold mb-4 tracking-tight text-white"
                         initial={{ y: 20, opacity: 0 }}
