@@ -1,51 +1,219 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useTexture, useGLTF, Html } from '@react-three/drei';
+import { useTexture, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Artwork } from '../../context/AppContext';
 import ArtworkFrame from './ArtworkFrame';
 import Player from './Player';
 import OrnateFrame from './OrnateFrame';
 
-// Low-poly tree centerpiece to replace the abstract sculpture
-function TreeCenterpiece() {
-    const { scene } = useGLTF('/easter_decorations_-__low_poly_tree.glb');
+// Optimized, beautiful, and theme-adaptive Centerpiece that runs smoothly on all devices
+function Centerpiece({ roomType }: { roomType: string }) {
+    const groupRef = useRef<THREE.Group>(null);
+    const ring1Ref = useRef<THREE.Mesh>(null);
+    const ring2Ref = useRef<THREE.Mesh>(null);
 
-    // Ensure all meshes within the tree model can cast and receive shadows
-    useEffect(() => {
-        scene.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-    }, [scene]);
-
-    return (
-        <group position={[0, -0.9, 0]}> {/* Adjust base height to sit on the floor */}
-            {/* The tree looks best when scaled up to fit the room appropriately */}
-            <primitive object={scene} scale={1.5} />
-        </group>
-    );
-}
-
-// Wrapper component to animate the imported LED ceiling light model
-function CeilingLight({ modelScene }: { modelScene: THREE.Group }) {
-    const lightRef = useRef<THREE.Group>(null);
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || (navigator.maxTouchPoints > 0)
+        || (window.innerWidth < 1024);
 
     useFrame((_, delta) => {
-        if (lightRef.current) {
-            // Apply a continuously slow rotation on the Y-axis
-            lightRef.current.rotation.y += delta * 0.2;
+        if (groupRef.current) {
+            groupRef.current.rotation.y += delta * 0.15;
+        }
+        if (ring1Ref.current) {
+            ring1Ref.current.rotation.x += delta * 0.3;
+            ring1Ref.current.rotation.y += delta * 0.1;
+        }
+        if (ring2Ref.current) {
+            ring2Ref.current.rotation.y -= delta * 0.4;
+            ring2Ref.current.rotation.z += delta * 0.2;
         }
     });
 
     return (
-        <group ref={lightRef} position={[0, -0.1, 0]}>
-            {/* Increase scale to make it much bigger */}
-            <primitive object={modelScene} scale={5} />
+        <group position={[0, 0, 0]}>
+            {/* Pedestal Base */}
+            <mesh position={[0, 0.4, 0]} castShadow={!isMobileDevice} receiveShadow={!isMobileDevice}>
+                <cylinderGeometry args={[0.6, 0.7, 0.8, 16]} />
+                <meshStandardMaterial 
+                    color={
+                        roomType === 'classical_salon' ? '#d7ccc8' :
+                        roomType === 'industrial_warehouse' ? '#3e2723' :
+                        roomType === 'neon_void' ? '#0d0d1a' : '#eceff1'
+                    }
+                    roughness={roomType === 'neon_void' ? 0.1 : 0.4}
+                    metalness={roomType === 'neon_void' ? 0.9 : 0.2}
+                />
+            </mesh>
+
+            {/* Glowing Sculpture on top */}
+            <group ref={groupRef} position={[0, 1.6, 0]}>
+                {roomType === 'neon_void' ? (
+                    <>
+                        {/* Glowing core sphere */}
+                        <mesh castShadow={!isMobileDevice}>
+                            <sphereGeometry args={[0.25, 16, 16]} />
+                            <meshBasicMaterial color="#00ffff" />
+                        </mesh>
+                        {/* Outer Neon Rings */}
+                        <mesh ref={ring1Ref}>
+                            <torusGeometry args={[0.5, 0.03, 8, 32]} />
+                            <meshBasicMaterial color="#ff00ff" />
+                        </mesh>
+                        <mesh ref={ring2Ref} rotation={[Math.PI / 3, Math.PI / 4, 0]}>
+                            <torusGeometry args={[0.7, 0.02, 8, 32]} />
+                            <meshBasicMaterial color="#00ff00" />
+                        </mesh>
+                        <pointLight distance={10} intensity={1.5} color="#00ffff" />
+                    </>
+                ) : roomType === 'classical_salon' ? (
+                    <>
+                        {/* Classic Marble sphere */}
+                        <mesh castShadow={!isMobileDevice}>
+                            <sphereGeometry args={[0.3, 16, 16]} />
+                            <meshStandardMaterial color="#ffffff" roughness={0.1} metalness={0.1} />
+                        </mesh>
+                        {/* Golden rings */}
+                        <mesh ref={ring1Ref}>
+                            <torusGeometry args={[0.6, 0.04, 8, 32]} />
+                            <meshStandardMaterial color="#d4af37" metalness={0.9} roughness={0.1} />
+                        </mesh>
+                        <mesh ref={ring2Ref} rotation={[Math.PI / 4, Math.PI / 6, 0]}>
+                            <torusGeometry args={[0.8, 0.03, 8, 32]} />
+                            <meshStandardMaterial color="#d4af37" metalness={0.9} roughness={0.1} />
+                        </mesh>
+                        <pointLight distance={8} intensity={0.8} color="#ffd1a3" />
+                    </>
+                ) : roomType === 'industrial_warehouse' ? (
+                    <>
+                        {/* Industrial Copper/Rust core */}
+                        <mesh castShadow={!isMobileDevice}>
+                            <octahedronGeometry args={[0.35]} />
+                            <meshStandardMaterial color="#8d6e63" metalness={0.8} roughness={0.4} />
+                        </mesh>
+                        {/* Dark iron rings */}
+                        <mesh ref={ring1Ref}>
+                            <torusGeometry args={[0.65, 0.05, 8, 24]} />
+                            <meshStandardMaterial color="#37474f" metalness={0.7} roughness={0.6} />
+                        </mesh>
+                        <mesh ref={ring2Ref} rotation={[Math.PI / 2, Math.PI / 3, 0]}>
+                            <torusGeometry args={[0.9, 0.03, 8, 24]} />
+                            <meshStandardMaterial color="#bf360c" metalness={0.9} roughness={0.2} />
+                        </mesh>
+                        <pointLight distance={8} intensity={1.0} color="#ffab40" />
+                    </>
+                ) : (
+                    // Atrium (Glass & light modern design)
+                    <>
+                        {/* Translucent white sphere */}
+                        <mesh castShadow={!isMobileDevice}>
+                            <sphereGeometry args={[0.35, 16, 16]} />
+                            <meshStandardMaterial color="#ffffff" transparent opacity={0.6} roughness={0.05} metalness={0.9} />
+                        </mesh>
+                        {/* Silver/Chrome rings */}
+                        <mesh ref={ring1Ref}>
+                            <torusGeometry args={[0.65, 0.03, 12, 48]} />
+                            <meshStandardMaterial color="#cfd8dc" metalness={1.0} roughness={0.05} />
+                        </mesh>
+                        <mesh ref={ring2Ref} rotation={[Math.PI / 3, Math.PI / 5, 0]}>
+                            <torusGeometry args={[0.85, 0.02, 12, 48]} />
+                            <meshStandardMaterial color="#cfd8dc" metalness={1.0} roughness={0.05} />
+                        </mesh>
+                        <pointLight distance={10} intensity={1.0} color="#ffffff" />
+                    </>
+                )}
+            </group>
         </group>
     );
+}
+
+// Procedural chandelier structure (0 KB to download, lightweight on CPU/GPU)
+function ProceduralCeilingLight({ roomType }: { roomType: string }) {
+    const lightRef = useRef<THREE.Group>(null);
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || (navigator.maxTouchPoints > 0)
+        || (window.innerWidth < 1024);
+
+    useFrame((_, delta) => {
+        if (lightRef.current) {
+            lightRef.current.rotation.y += delta * 0.15;
+        }
+    });
+
+    if (roomType === 'neon_void') {
+        return (
+            <group ref={lightRef} position={[0, -0.2, 0]}>
+                <mesh rotation={[Math.PI / 2, 0, 0]}>
+                    <torusGeometry args={[1.5, 0.06, 8, 48]} />
+                    <meshBasicMaterial color="#ff00ff" />
+                </mesh>
+                <pointLight distance={15} intensity={2.0} color="#ff00ff" />
+            </group>
+        );
+    } else if (roomType === 'industrial_warehouse') {
+        return (
+            <group position={[0, -0.2, 0]}>
+                <mesh castShadow={!isMobileDevice}>
+                    <cylinderGeometry args={[0.8, 1.2, 0.4, 16]} />
+                    <meshStandardMaterial color="#212121" metalness={0.8} roughness={0.3} />
+                </mesh>
+                <mesh position={[0, -0.2, 0]}>
+                    <sphereGeometry args={[0.3, 16, 16]} />
+                    <meshStandardMaterial color="#ffffff" emissive="#ffaa44" emissiveIntensity={3} />
+                </mesh>
+                <pointLight distance={12} intensity={1.5} color="#ffaa44" castShadow={!isMobileDevice} />
+            </group>
+        );
+    } else if (roomType === 'classical_salon') {
+        return (
+            <group ref={lightRef} position={[0, -0.5, 0]}>
+                <mesh rotation={[Math.PI / 2, 0, 0]} castShadow={!isMobileDevice}>
+                    <torusGeometry args={[1.8, 0.08, 12, 48]} />
+                    <meshStandardMaterial color="#d4af37" metalness={1.0} roughness={0.1} />
+                </mesh>
+                {Array.from({ length: 8 }).map((_, i) => {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const x = Math.cos(angle) * 1.8;
+                    const z = Math.sin(angle) * 1.8;
+                    return (
+                        <group key={i} position={[x, 0.1, z]}>
+                            <mesh castShadow={!isMobileDevice}>
+                                <cylinderGeometry args={[0.04, 0.04, 0.2]} />
+                                <meshStandardMaterial color="#ffffff" />
+                            </mesh>
+                            <mesh position={[0, 0.15, 0]}>
+                                <sphereGeometry args={[0.06, 8, 8]} />
+                                <meshStandardMaterial color="#ffffff" emissive="#ffd1a3" emissiveIntensity={3} />
+                            </mesh>
+                        </group>
+                    );
+                })}
+                <pointLight distance={20} intensity={1.2} color="#ffd1a3" castShadow={!isMobileDevice} />
+            </group>
+        );
+    } else {
+        return (
+            <group ref={lightRef} position={[0, -0.2, 0]}>
+                <mesh rotation={[Math.PI / 2, 0, 0]} castShadow={!isMobileDevice}>
+                    <torusGeometry args={[2.0, 0.05, 12, 48]} />
+                    <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={1.2} roughness={0.1} />
+                </mesh>
+                {Array.from({ length: 4 }).map((_, i) => {
+                    const angle = (i / 4) * Math.PI * 2;
+                    const x = Math.cos(angle) * 2.0;
+                    const z = Math.sin(angle) * 2.0;
+                    return (
+                        <mesh key={i} position={[x / 2, 0.5, z / 2]} rotation={[0, 0, angle + Math.PI / 4]}>
+                            <cylinderGeometry args={[0.01, 0.01, 1.2]} />
+                            <meshStandardMaterial color="#888888" metalness={0.9} />
+                        </mesh>
+                    );
+                })}
+                <pointLight distance={22} intensity={1.5} color="#e3f2fd" castShadow={!isMobileDevice} />
+            </group>
+        );
+    }
 }
 
 export default function GalleryEnvironment({
@@ -57,7 +225,8 @@ export default function GalleryEnvironment({
     onUnlock,
     roomType = 'atrium',
     enableGuestbook = false,
-    onGuestbookClick
+    onGuestbookClick,
+    mobileMovement
 }: {
     artworks: Artwork[],
     onArtworkClick: (art: Artwork) => void;
@@ -68,18 +237,20 @@ export default function GalleryEnvironment({
     roomType?: string;
     enableGuestbook?: boolean;
     onGuestbookClick?: () => void;
+    mobileMovement?: { forward: boolean; backward: boolean; left: boolean; right: boolean; };
 }) {
     const roomLength = 30; // Longer room for depth
     const roomWidth = 20;
+
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || (navigator.maxTouchPoints > 0)
+        || (window.innerWidth < 1024);
 
     // Load the custom wall texture
     const wallTexture = useTexture('/wall-pattern.jpg');
 
     // Load the custom floor texture
     const floorTexture = useTexture('/floor-pattern.jpg');
-
-    // Load the LED ceiling light model
-    const ceilingLightGLTF = useGLTF('/led_ceiling_light.glb');
 
     // Configure textures for tiling
     wallTexture.wrapS = THREE.RepeatWrapping;
@@ -158,23 +329,23 @@ export default function GalleryEnvironment({
 
     return (
         <group>
-            {/* Ambient Lighting - dimmer for the effect */}
+            {/* Ambient Lighting */}
             <ambientLight intensity={currentStyle.ambientIntensity * 0.5} color={currentStyle.ambientColor} />
 
-            {/* Main directional light coming from the window - much dimmer */}
+            {/* Main directional light coming from the window */}
             <directionalLight
                 position={[0, 10, -roomLength / 2 - 10]}
                 intensity={currentStyle.directionalIntensity * 0.4}
                 color={currentStyle.directionalColor}
-                castShadow
-                shadow-mapSize={[2048, 2048]}
+                castShadow={!isMobileDevice}
+                shadow-mapSize={isMobileDevice ? [512, 512] : [1024, 1024]}
                 shadow-camera-top={20}
                 shadow-camera-bottom={-20}
                 shadow-camera-left={-20}
                 shadow-camera-right={20}
                 shadow-camera-near={0.1}
                 shadow-camera-far={100}
-                shadow-bias={-0.001}
+                shadow-bias={-0.002}
             />
 
             {/* Subtle fill lights for the artworks */}
@@ -199,7 +370,7 @@ export default function GalleryEnvironment({
             {/* --- Architecture --- */}
 
             {/* Floor */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow={!isMobileDevice}>
                 <planeGeometry args={[roomWidth, roomLength]} />
                 <meshStandardMaterial
                     map={floorTexture}
@@ -319,8 +490,8 @@ export default function GalleryEnvironment({
                         ))}
                     </group>
 
-                    {/* The GLB Chandelier loaded in the center */}
-                    <CeilingLight modelScene={ceilingLightGLTF.scene} />
+                    {/* The procedurally generated modern Chandelier */}
+                    <ProceduralCeilingLight roomType={roomType} />
                 </group>
             )}
 
@@ -486,9 +657,9 @@ export default function GalleryEnvironment({
                 </mesh>
             </group>
 
-            {/* --- Center Pedestal & Tree --- */}
+            {/* --- Center Pedestal & Sculpture --- */}
             <group position={[0, 0, -2]}>
-                <TreeCenterpiece />
+                <Centerpiece roomType={roomType} />
             </group>
 
             {/* --- Guestbook Table --- */}
@@ -615,12 +786,13 @@ export default function GalleryEnvironment({
                 );
             })}
 
-            {/* Player Controller for WASD */}
+            {/* Player Controller for WASD & Mobile Touch */}
             <Player
                 exploreMode={exploreMode}
                 introDone={introDone}
                 setIntroDone={setIntroDone}
                 onUnlock={onUnlock}
+                mobileMovement={mobileMovement}
             />
         </group>
     )

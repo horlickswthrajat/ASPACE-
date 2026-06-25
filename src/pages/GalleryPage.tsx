@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
-import { ArrowLeft, Loader2, Star, Info, Settings2, LayoutGrid, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Star, Info, Settings2, X, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { useAppContext } from '../context/AppContext';
@@ -130,8 +130,16 @@ export default function GalleryPage() {
     const [exploreMode, setExploreMode] = useState(false);
     const [introDone, setIntroDone] = useState(false);
 
-    // Orientation State
-    const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+    // Orientation and Device Detection
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Mobile movement controls
+    const [mobileMovement, setMobileMovement] = useState({
+        forward: false,
+        backward: false,
+        left: false,
+        right: false
+    });
 
     // Guestbook State
     const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
@@ -145,22 +153,13 @@ export default function GalleryPage() {
 
     useEffect(() => {
         const handleResize = () => {
-            setIsPortrait(window.innerHeight > window.innerWidth);
+            const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const isSmallScreen = window.innerWidth < 1024;
+            setIsMobile(isTouch || isSmallScreen);
         };
 
         window.addEventListener('resize', handleResize);
-        
-        const lockOrientation = async () => {
-            try {
-                if (window.screen.orientation && (window.screen.orientation as any).lock) {
-                    await (window.screen.orientation as any).lock('landscape');
-                }
-            } catch (err) {
-                console.warn('Orientation lock failed:', err);
-            }
-        };
-        
-        lockOrientation();
+        handleResize(); // run initially
 
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -376,7 +375,7 @@ export default function GalleryPage() {
             transition={{ duration: 0.8 }}
         >
             {/* Overlay UI */}
-            <div className="absolute inset-x-0 top-8 px-8 flex justify-between items-start z-10 pointer-events-none">
+            <div className="absolute inset-x-0 top-8 px-4 md:px-8 flex justify-between items-start z-10 pointer-events-none">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => navigate('/dashboard')}
@@ -407,37 +406,37 @@ export default function GalleryPage() {
                 </div>
 
                 {room && (
-                    <div className="pointer-events-auto flex flex-col items-end gap-4">
+                    <div className="pointer-events-auto flex flex-col items-end gap-3 md:gap-4 max-w-[200px] sm:max-w-xs md:max-w-sm">
                         {/* Room Info */}
                         <div
-                            className="backdrop-blur-md px-6 py-4 rounded-3xl shadow-lg border max-w-sm text-right"
+                            className="backdrop-blur-md px-4 py-3 md:px-6 md:py-4 rounded-3xl shadow-lg border text-right"
                             style={{ backgroundColor: theme.surface, borderColor: theme.border }}
                         >
-                            <h1 className="text-2xl font-black leading-tight mb-1" style={{ color: theme.text }}>{room.name}</h1>
+                            <h1 className="text-lg md:text-2xl font-black leading-tight mb-0.5 md:mb-1 truncate" style={{ color: theme.text }}>{room.name}</h1>
                             {room.description && (
-                                <p className="font-semibold text-sm line-clamp-2" style={{ color: theme.text, opacity: 0.8 }}>{room.description}</p>
+                                <p className="font-semibold text-xs md:text-sm line-clamp-2" style={{ color: theme.text, opacity: 0.8 }}>{room.description}</p>
                             )}
                             <div
-                                className="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold"
+                                className="mt-1 md:mt-2 inline-flex items-center gap-1.5 md:gap-2 px-2.5 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold"
                                 style={{ backgroundColor: theme.background, color: theme.text }}
                             >
-                                <Info size={14} />
+                                <Info size={12} />
                                 3D Exhibition
                             </div>
                         </div>
 
                         {/* Room Rating Interactor */}
-                        {!selectedArtwork && (
+                        {!selectedArtwork && !exploreMode && (
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="backdrop-blur-md px-6 py-4 rounded-3xl shadow-xl border flex flex-col items-center gap-2"
+                                className="backdrop-blur-md px-4 py-3 md:px-6 md:py-4 rounded-3xl shadow-xl border flex flex-col items-center gap-1 md:gap-2"
                                 style={{ backgroundColor: theme.surface, borderColor: theme.border }}
                             >
-                                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: theme.text, opacity: 0.8 }}>
+                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider" style={{ color: theme.text, opacity: 0.8 }}>
                                     {userRating > 0 ? 'Your Rating' : 'Rate this Room'}
                                 </span>
-                                <div className="flex gap-1">
+                                <div className="flex gap-0.5 md:gap-1">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
                                             key={star}
@@ -448,27 +447,27 @@ export default function GalleryPage() {
                                             className="transition-transform hover:scale-125 disabled:opacity-50 cursor-pointer"
                                         >
                                             <Star
-                                                size={ star <= (hoverRating || userRating) ? 28 : 24 }
+                                                size={ star <= (hoverRating || userRating) ? 22 : 18 }
                                                 className={(hoverRating || userRating) >= star ? 'text-[#fcaab8] fill-[#fcaab8]' : 'text-gray-300'}
                                             />
                                         </button>
                                     ))}
                                 </div>
-                                <span className="text-xs font-bold mt-1" style={{ color: theme.text, opacity: 0.6 }}>
-                                    Avg: {room.ratingCount > 0 ? (room.ratingSum / room.ratingCount).toFixed(1) : 'New'} ({room.ratingCount} reviews)
+                                <span className="text-[9px] md:text-xs font-bold mt-0.5" style={{ color: theme.text, opacity: 0.6 }}>
+                                    Avg: {room.ratingCount > 0 ? (room.ratingSum / room.ratingCount).toFixed(1) : 'New'} ({room.ratingCount})
                                 </span>
                             </motion.div>
                         )}
                         {/* Edit Room Button (Owner or Co-Creator) */}
-                        {user && (room.userId === user.uid || room.coCreatorId === user.uid) && !selectedArtwork && (
+                        {user && (room.userId === user.uid || room.coCreatorId === user.uid) && !selectedArtwork && !exploreMode && (
                             <motion.button
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 onClick={() => setIsManageGalleryModalOpen(true)}
-                                className="pointer-events-auto backdrop-blur-md px-6 py-3 rounded-full shadow-xl border flex items-center gap-2 font-bold transition-transform hover:scale-105 cursor-pointer"
+                                className="pointer-events-auto backdrop-blur-md px-4 py-2.5 md:px-6 md:py-3 rounded-full shadow-xl border flex items-center gap-1.5 md:gap-2 font-bold text-xs md:text-sm transition-transform hover:scale-105 cursor-pointer"
                                 style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.text }}
                             >
-                                <Settings2 size={20} style={{ color: theme.primary }} />
+                                <Settings2 size={16} style={{ color: theme.primary }} />
                                 Edit Room
                             </motion.button>
                         )}
@@ -496,7 +495,7 @@ export default function GalleryPage() {
                                         }).catch(e => console.warn(e));
                                     }
                                 }}
-                                className="pointer-events-auto border-4 px-12 py-5 rounded-full font-black text-2xl shadow-[0_10px_40px_rgba(252,170,184,0.3)] transition-all hover:scale-105 hover:brightness-110 flex items-center gap-3 cursor-pointer"
+                                className="pointer-events-auto border-4 px-10 py-4 md:px-12 md:py-5 rounded-full font-black text-xl md:text-2xl shadow-[0_10px_40px_rgba(252,170,184,0.3)] transition-all hover:scale-105 hover:brightness-110 flex items-center gap-3 cursor-pointer"
                                 style={{
                                     backgroundColor: theme.primary,
                                     borderColor: theme.border,
@@ -505,8 +504,10 @@ export default function GalleryPage() {
                             >
                                 Explore Room
                             </button>
-                            <p className="text-white font-bold bg-black/40 px-6 py-2 rounded-full backdrop-blur-md">
-                                Use W,A,S,D to move and Mouse to look around.
+                            <p className="text-white font-bold bg-black/40 px-6 py-2 rounded-full backdrop-blur-md text-center max-w-sm">
+                                {isMobile 
+                                    ? "Drag anywhere to look around. Use virtual controls to walk." 
+                                    : "Use W, A, S, D keys to walk and click/drag to look around."}
                             </p>
                         </div>
                     </motion.div>
@@ -524,71 +525,73 @@ export default function GalleryPage() {
                         }}
                     />
                 )}
-
-                {/* Mobile Orientation Locked Overlay */}
-                {isPortrait && (window.innerWidth < 1024) && (
-                    <motion.div
-                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-8 backdrop-blur-[40px] text-center"
-                        style={{ background: `radial-gradient(circle at center, ${theme.primary}4D, ${theme.background}FB)` }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                    >
-                        <motion.div
-                            className="relative mb-12"
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                        >
-                            <motion.div
-                                animate={{ rotate: 90 }}
-                                transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut", repeatDelay: 1 }}
-                                className="w-20 h-32 border-[3px] rounded-[2rem] relative shadow-2xl"
-                                style={{ borderColor: `${theme.text}40`, backgroundColor: `${theme.surface}33` }}
-                            >
-                                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-8 h-1.5 rounded-full" style={{ backgroundColor: `${theme.text}20` }} />
-                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full" style={{ backgroundColor: `${theme.text}20` }} />
-                            </motion.div>
-                            
-                            <motion.div 
-                                className="absolute -top-4 -right-4 w-8 h-8 rounded-full blur-xl"
-                                animate={{ opacity: [0.2, 0.5, 0.2] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                style={{ backgroundColor: theme.light1 }} 
-                            />
-                        </motion.div>
-
-                        <h2 className="text-4xl font-black mb-6 tracking-tight leading-tight" style={{ color: theme.text }}>
-                            Rotate for <br/><span style={{ color: theme.light2 }}>Exhibition Mode</span>
-                        </h2>
-                        <p className="font-bold text-lg opacity-80 max-w-sm mb-12" style={{ color: theme.text }}>
-                            Step into the full immersive 3D experience by holding your device horizontally.
-                        </p>
-                        
-                        <div className="flex flex-col gap-4 w-full max-w-xs">
-                            <button
-                                onClick={() => {
-                                    if (document.documentElement.requestFullscreen) {
-                                        document.documentElement.requestFullscreen();
-                                    }
-                                }}
-                                className="w-full px-8 py-5 rounded-3xl font-black text-xl shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
-                                style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
-                            >
-                                <LayoutGrid size={24} />
-                                Enter ArtSpace
-                            </button>
-                            
-                            <p className="text-xs font-bold uppercase tracking-widest opacity-40 mt-4" style={{ color: theme.text }}>
-                                Best experienced on larger screens
-                            </p>
-                        </div>
-
-                        <div className="absolute top-0 right-0 w-96 h-96 blur-[120px] rounded-full -mr-48 -mt-48 opacity-20 pointer-events-none" style={{ backgroundColor: theme.light1 }} />
-                        <div className="absolute bottom-0 left-0 w-96 h-96 blur-[120px] rounded-full -ml-48 -mb-48 opacity-20 pointer-events-none" style={{ backgroundColor: theme.light2 }} />
-                    </motion.div>
-                )}
             </AnimatePresence>
+
+            {/* Floating Exit Walkthrough / Explore Mode Button */}
+            {exploreMode && !selectedArtwork && !isGuestbookOpen && (
+                <button
+                    onClick={() => {
+                        setExploreMode(false);
+                        if (document.pointerLockElement) {
+                            document.exitPointerLock();
+                        }
+                    }}
+                    className="absolute top-8 right-4 md:right-8 z-50 pointer-events-auto px-4 py-2.5 md:px-6 md:py-3 rounded-full backdrop-blur-md border shadow-lg font-black text-xs md:text-sm flex items-center gap-2 hover:scale-105 transition-all"
+                    style={{ backgroundColor: `${theme.surface}CC`, borderColor: theme.border, color: theme.text }}
+                >
+                    <X size={16} style={{ color: theme.primary }} />
+                    Exit Walkthrough
+                </button>
+            )}
+
+            {/* Mobile Touch Movement D-pad */}
+            {exploreMode && !selectedArtwork && !isGuestbookOpen && isMobile && (
+                <div className="absolute bottom-24 left-6 md:left-8 z-50 flex flex-col items-center gap-1.5 pointer-events-auto select-none">
+                    {/* Forward */}
+                    <button
+                        onTouchStart={() => setMobileMovement(prev => ({ ...prev, forward: true }))}
+                        onTouchEnd={() => setMobileMovement(prev => ({ ...prev, forward: false }))}
+                        onMouseDown={() => setMobileMovement(prev => ({ ...prev, forward: true }))}
+                        onMouseUp={() => setMobileMovement(prev => ({ ...prev, forward: false }))}
+                        className="w-14 h-14 rounded-full backdrop-blur-md border flex items-center justify-center bg-black/45 text-white active:bg-pink-500/40 active:scale-95 transition-all shadow-lg border-white/10"
+                    >
+                        <ChevronUp size={28} />
+                    </button>
+                    
+                    {/* Left / Right */}
+                    <div className="flex gap-7">
+                        <button
+                            onTouchStart={() => setMobileMovement(prev => ({ ...prev, left: true }))}
+                            onTouchEnd={() => setMobileMovement(prev => ({ ...prev, left: false }))}
+                            onMouseDown={() => setMobileMovement(prev => ({ ...prev, left: true }))}
+                            onMouseUp={() => setMobileMovement(prev => ({ ...prev, left: false }))}
+                            className="w-14 h-14 rounded-full backdrop-blur-md border flex items-center justify-center bg-black/45 text-white active:bg-pink-500/40 active:scale-95 transition-all shadow-lg border-white/10"
+                        >
+                            <ChevronLeft size={28} />
+                        </button>
+                        <button
+                            onTouchStart={() => setMobileMovement(prev => ({ ...prev, right: true }))}
+                            onTouchEnd={() => setMobileMovement(prev => ({ ...prev, right: false }))}
+                            onMouseDown={() => setMobileMovement(prev => ({ ...prev, right: true }))}
+                            onMouseUp={() => setMobileMovement(prev => ({ ...prev, right: false }))}
+                            className="w-14 h-14 rounded-full backdrop-blur-md border flex items-center justify-center bg-black/45 text-white active:bg-pink-500/40 active:scale-95 transition-all shadow-lg border-white/10"
+                        >
+                            <ChevronRight size={28} />
+                        </button>
+                    </div>
+                    
+                    {/* Backward */}
+                    <button
+                        onTouchStart={() => setMobileMovement(prev => ({ ...prev, backward: true }))}
+                        onTouchEnd={() => setMobileMovement(prev => ({ ...prev, backward: false }))}
+                        onMouseDown={() => setMobileMovement(prev => ({ ...prev, backward: true }))}
+                        onMouseUp={() => setMobileMovement(prev => ({ ...prev, backward: false }))}
+                        className="w-14 h-14 rounded-full backdrop-blur-md border flex items-center justify-center bg-black/45 text-white active:bg-pink-500/40 active:scale-95 transition-all shadow-lg border-white/10"
+                    >
+                        <ChevronDown size={28} />
+                    </button>
+                </div>
+            )}
 
             {/* Guestbook Overlay Modal */}
             <AnimatePresence>
@@ -713,6 +716,7 @@ export default function GalleryPage() {
                             introDone={introDone}
                             setIntroDone={setIntroDone}
                             onUnlock={() => setExploreMode(false)}
+                            mobileMovement={mobileMovement}
                         />
                         <XRButtonContainer />
                     </React.Suspense>
@@ -721,9 +725,13 @@ export default function GalleryPage() {
 
             {/* Guide overlay bottom center */}
             <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none transition-opacity duration-500 ${selectedArtwork || isGuestbookOpen ? 'opacity-0' : 'opacity-100'}`}>
-                <div className="px-6 py-3 rounded-full backdrop-blur-md border shadow-lg transition-colors"
+                <div className="px-6 py-3 rounded-full backdrop-blur-md border shadow-lg transition-colors text-center"
                      style={{ backgroundColor: `${theme.primary}B3`, borderColor: theme.border, color: theme.text }}>
-                    <p className="text-sm font-semibold tracking-wide">Click and drag to look around. Click artworks to interact.</p>
+                    <p className="text-xs md:text-sm font-semibold tracking-wide">
+                        {isMobile 
+                            ? "Drag screen to look. Use D-pad to walk. Tap frames to view." 
+                            : "Click and drag to look around. Use W, A, S, D to walk. Click frames."}
+                    </p>
                 </div>
             </div>
 

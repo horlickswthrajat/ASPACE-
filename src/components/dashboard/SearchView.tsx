@@ -96,11 +96,27 @@ export default function SearchView({ containerVariants, itemVariants, searchQuer
 
     return (
         <motion.div
-            className="flex-1 overflow-y-auto px-4 md:px-8 pb-12 pt-4 md:pt-8 flex flex-col gap-10 max-w-4xl"
+            className="flex-1 overflow-y-auto px-4 md:px-8 pb-12 pt-4 md:pt-8 flex flex-col gap-6 md:gap-10 max-w-4xl"
             variants={containerVariants}
             initial="hidden"
             animate="show"
         >
+            {/* Mobile Search Bar - visible only on small screens where desktop topbar search is hidden */}
+            <div className="lg:hidden w-full relative mb-2">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 opacity-50 z-10" style={{ color: theme.text }} size={18} />
+                <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-2xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all font-semibold text-base neumorphic-inset"
+                    style={{
+                        backgroundColor: theme.primary,
+                        color: theme.text,
+                    }}
+                />
+            </div>
+
             {searchQuery.trim() ? (
                 <motion.div variants={itemVariants} className="flex flex-col gap-4">
                     <h2 className="text-2xl font-bold tracking-tight mb-2" style={{ color: theme.text }}>

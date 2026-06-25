@@ -187,20 +187,21 @@ export default function DashboardPage() {
 
             {/* Sidebar - Hidden on mobile */}
             <motion.aside
-                className="w-72 hidden lg:flex flex-col p-8 z-10 relative"
+                className="w-20 xl:w-72 hidden lg:flex flex-col p-4 xl:p-8 z-10 relative border-r transition-all duration-300"
+                style={{ backgroundColor: theme.surface, borderColor: theme.border }}
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
             >
-                <motion.div variants={itemVariants} className="flex items-center gap-3 mb-12 px-2">
+                <motion.div variants={itemVariants} className="flex items-center gap-3 mb-12 px-2 justify-center xl:justify-start">
                     <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer shadow-lg transition-colors duration-500"
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer shadow-lg transition-colors duration-500 flex-shrink-0"
                         onClick={() => navigate('/')}
                         style={{ backgroundColor: theme.text, color: theme.background }}
                     >
                         A
                     </div>
-                    <span className="text-2xl font-bold tracking-tight transition-colors duration-500" style={{ color: theme.text }}>ArtSpace</span>
+                    <span className="text-2xl font-black tracking-tight transition-colors duration-500 hidden xl:block" style={{ color: theme.text, fontFamily: "'Caveat', cursive" }}>ArtSpace</span>
                 </motion.div>
 
                 <nav className="flex-1 flex flex-col gap-3">
@@ -228,28 +229,40 @@ export default function DashboardPage() {
                                     }
                                 }}
                                 variants={itemVariants}
-                                whileHover={{ scale: 1.05, x: 5 }}
+                                whileHover={{ scale: 1.05, x: 2 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`flex items-center gap-4 px-5 py-4 rounded-[1.5rem] transition-all font-semibold text-lg neumorphic-glass`}
+                                className={`flex items-center gap-4 px-3 xl:px-5 py-4 rounded-[1.5rem] transition-all font-semibold text-lg justify-center xl:justify-start neumorphic-glass`}
                                 style={{
                                     backgroundColor: isActive ? theme.primary : theme.surface,
                                     color: theme.text,
                                     opacity: isActive ? 1 : 0.8,
                                     boxShadow: isActive ? 'inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.4)' : undefined
                                 }}
+                                title={item.label}
                             >
-                                <div className="relative">
-                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                                    {((item.label === 'Notifications' && unreadNotificationsCount > 0) || (item.label === 'Messages' && unreadMessagesCount > 0)) && (
-                                        <div className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full shadow-sm border-[1.5px] pointer-events-none" style={{ borderColor: theme.surface }}>
-                                            {item.label === 'Notifications'
-                                                ? (unreadNotificationsCount > 20 ? '20+' : unreadNotificationsCount)
-                                                : (unreadMessagesCount > 20 ? '20+' : unreadMessagesCount)
-                                            }
+                                <div className="relative flex items-center justify-center flex-shrink-0">
+                                    {item.label === 'Profile' ? (
+                                        <div 
+                                            className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'scale-105' : 'border-transparent'}`}
+                                            style={{ borderColor: isActive ? theme.primary : 'transparent' }}
+                                        >
+                                            <img src={profile.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'} alt="Profile" className="w-full h-full object-cover" />
                                         </div>
+                                    ) : (
+                                        <>
+                                            <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                            {((item.label === 'Notifications' && unreadNotificationsCount > 0) || (item.label === 'Messages' && unreadMessagesCount > 0)) && (
+                                                <div className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] h-5 px-1 flex items-center justify-center rounded-full shadow-sm border-[1.5px] pointer-events-none" style={{ borderColor: theme.surface }}>
+                                                    {item.label === 'Notifications'
+                                                        ? (unreadNotificationsCount > 20 ? '20+' : unreadNotificationsCount)
+                                                        : (unreadMessagesCount > 20 ? '20+' : unreadMessagesCount)
+                                                    }
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
-                                {item.label}
+                                <span className="hidden xl:block">{item.label}</span>
                             </motion.button>
                         );
                     })}
@@ -262,9 +275,10 @@ export default function DashboardPage() {
                         onClick={handleInstallClick}
                         className="mb-3 flex items-center justify-center gap-2 w-full py-3.5 rounded-[1.5rem] font-black text-md transition-all shadow-lg hover:scale-105 border border-transparent cursor-pointer"
                         style={{ backgroundColor: theme.primary, color: getContrastColor(theme.primary) }}
+                        title="Download App"
                     >
                         <Download size={18} strokeWidth={2.5} />
-                        Download App
+                        <span className="hidden xl:block">Download App</span>
                     </motion.button>
                 )}
 
@@ -276,18 +290,53 @@ export default function DashboardPage() {
                         await signOut();
                         navigate('/');
                     }}
-                    className="mb-4 flex items-center justify-center gap-2 w-full py-3 rounded-[1.5rem] font-bold text-md transition-all neumorphic-glass hover:opacity-100"
+                    className="mb-4 flex items-center justify-center gap-2 w-full py-3 rounded-[1.5rem] font-bold text-md transition-all neumorphic-glass hover:opacity-100 cursor-pointer"
                     style={{ backgroundColor: theme.surface, color: theme.text, opacity: 0.8 }}
+                    title="Sign Out"
                 >
                     <LogOut size={18} />
-                    Sign Out
+                    <span className="hidden xl:block">Sign Out</span>
                 </motion.button>
             </motion.aside>
 
             {/* Main Content */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative z-10 p-2 pb-20 lg:pb-2">
-                {/* Topbar */}
-                <header className="flex items-center justify-between p-4 lg:p-8 pb-4">
+                {/* Mobile Topbar */}
+                <header 
+                    className="lg:hidden flex items-center justify-between p-4 border-b z-40 backdrop-blur-xl" 
+                    style={{ backgroundColor: `${theme.surface}B3`, borderColor: theme.border }}
+                >
+                    <div className="flex items-center gap-2" onClick={() => setActiveTab('Home')}>
+                        <span className="text-3xl font-black tracking-tight cursor-pointer" style={{ color: theme.text, fontFamily: "'Caveat', cursive" }}>ArtSpace</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {/* Notifications */}
+                        <button
+                            onClick={() => setIsNotificationsOpen(true)}
+                            className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                            style={{ color: theme.text }}
+                        >
+                            <Bell size={22} />
+                            {unreadNotificationsCount > 0 && (
+                                <div className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm" style={{ borderColor: theme.surface }}>
+                                    {unreadNotificationsCount}
+                                </div>
+                            )}
+                        </button>
+                        
+                        {/* Settings */}
+                        <button
+                            onClick={() => setIsSettingsModalOpen(true)}
+                            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                            style={{ color: theme.text }}
+                        >
+                            <Settings size={22} />
+                        </button>
+                    </div>
+                </header>
+
+                {/* Desktop Topbar */}
+                <header className="hidden lg:flex items-center justify-between p-4 lg:p-8 pb-4">
                     <motion.div
                         initial={{ opacity: 0, y: -20, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -410,40 +459,45 @@ export default function DashboardPage() {
 
                 {/* Bottom Navigation for Mobile */}
                 <nav
-                    className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around p-4 backdrop-blur-xl border-t neumorphic-glass"
-                    style={{ backgroundColor: `${theme.surface}CC`, borderColor: theme.border }}
+                    className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around py-3 px-4 backdrop-blur-xl border-t neumorphic-glass shadow-2xl"
+                    style={{ backgroundColor: `${theme.surface}E6`, borderColor: theme.border }}
                 >
                     {[
                         { icon: Home, label: 'Home' },
                         { icon: Search, label: 'Search' },
-                        { icon: Users, label: 'Artists' },
+                        { icon: LayoutGrid, label: 'Builder' },
                         { icon: Mail, label: 'Messages' },
-                        { icon: User, label: 'Profile' },
-                        { icon: Settings, label: 'Settings' }
+                        { icon: User, label: 'Profile' }
                     ].map((item, index) => {
                         const isActive = activeTab === item.label;
+                        const isProfileTab = item.label === 'Profile';
                         return (
                             <button
                                 key={index}
-                                onClick={() => {
-                                    if (item.label === 'Settings') {
-                                        setIsSettingsModalOpen(true);
-                                    } else {
-                                        setActiveTab(item.label);
-                                    }
-                                }}
-                                className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'scale-110' : 'opacity-60'}`}
+                                onClick={() => setActiveTab(item.label)}
+                                className={`flex flex-col items-center gap-0.5 transition-all ${isActive ? 'scale-105 font-bold' : 'opacity-65'}`}
                                 style={{ color: isActive ? theme.primary : theme.text }}
                             >
-                                <div className="relative">
-                                    <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-                                    {item.label === 'Messages' && unreadMessagesCount > 0 && (
-                                        <div className="absolute -top-1 -right-2 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm">
-                                            {unreadMessagesCount > 20 ? '20+' : unreadMessagesCount}
+                                <div className="relative w-8 h-8 flex items-center justify-center">
+                                    {isProfileTab ? (
+                                        <div 
+                                            className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all ${isActive ? 'scale-105' : 'border-transparent'}`}
+                                            style={{ borderColor: isActive ? theme.primary : 'transparent' }}
+                                        >
+                                            <img src={profile.photoURL || 'https://api.dicebear.com/7.x/avataaars/svg?seed=fallback'} alt="Profile" className="w-full h-full object-cover" />
                                         </div>
-                                    )}             
+                                    ) : (
+                                        <>
+                                            <item.icon size={23} strokeWidth={isActive ? 2.5 : 2} />
+                                            {item.label === 'Messages' && unreadMessagesCount > 0 && (
+                                                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold min-w-[0.75rem] h-4 px-1 flex items-center justify-center rounded-full border shadow-sm" style={{ borderColor: theme.surface }}>
+                                                    {unreadMessagesCount > 20 ? '20+' : unreadMessagesCount}
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
-                                <span className="text-[9px] font-bold">{item.label}</span>
+                                <span className="text-[9px] font-bold tracking-tight">{item.label}</span>
                             </button>
                         );
                     })}

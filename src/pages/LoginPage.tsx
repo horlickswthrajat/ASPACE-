@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Loader2, AlertCircle, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
@@ -14,6 +14,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [copiedDomain, setCopiedDomain] = useState(false);
     const { theme } = useAppContext();
 
     useEffect(() => {
@@ -66,22 +67,40 @@ export default function LoginPage() {
         const isUnauthorizedDomain = error.includes('auth/unauthorized-domain') || error.includes('Domain unauthorized');
         const showLocalhostSwitch = isUnauthorizedDomain && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         
+        const handleCopyDomain = () => {
+            navigator.clipboard.writeText(window.location.hostname);
+            setCopiedDomain(true);
+            setTimeout(() => setCopiedDomain(false), 2000);
+        };
+
         return (
-            <div className="flex flex-col gap-2 text-red-500 text-sm font-semibold bg-red-100/50 p-3 rounded-xl border border-red-200">
-                <div className="flex items-center gap-2">
-                    <AlertCircle size={16} className="shrink-0" />
-                    <span>{error}</span>
+            <div className="flex flex-col gap-2.5 text-red-500 text-sm font-semibold bg-red-100/50 p-4 rounded-xl border border-red-200">
+                <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span className="leading-tight">{error}</span>
                 </div>
-                {showLocalhostSwitch && (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            window.location.href = `http://localhost:${window.location.port || '5173'}${window.location.pathname}${window.location.search}`;
-                        }}
-                        className="mt-1 text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors self-start font-bold cursor-pointer"
-                    >
-                        Switch to localhost
-                    </button>
+                {isUnauthorizedDomain && (
+                    <div className="flex flex-wrap gap-2 mt-1">
+                        <button
+                            type="button"
+                            onClick={handleCopyDomain}
+                            className="flex items-center gap-1 text-xs bg-slate-700 text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors font-bold cursor-pointer"
+                        >
+                            {copiedDomain ? <Check size={12} /> : <Copy size={12} />}
+                            {copiedDomain ? 'Domain Copied!' : 'Copy Domain'}
+                        </button>
+                        {showLocalhostSwitch && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    window.location.href = `http://localhost:${window.location.port || '5173'}${window.location.pathname}${window.location.search}`;
+                                }}
+                                className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors font-bold cursor-pointer"
+                            >
+                                Switch to localhost
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         );
