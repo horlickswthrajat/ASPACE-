@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, UserCheck, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -16,11 +16,21 @@ const AVATAR_SEEDS = [
 export default function ProfileSetupPage() {
     const navigate = useNavigate();
     const { setAvatarUrl, setName, theme } = useAppContext();
-    const { updateUserProfile } = useAuth();
+    const { user, profile, loading, updateUserProfile } = useAuth();
     const [name, setDisplayName] = useState('');
     const [seedIndex, setSeedIndex] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user) {
+                navigate('/login');
+            } else if (profile && profile.displayName && profile.displayName !== 'Anonymous Artist' && !profile.displayName.startsWith('user')) {
+                navigate('/dashboard');
+            }
+        }
+    }, [user, profile, loading, navigate]);
 
     const [customAvatar, setCustomAvatar] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState('');

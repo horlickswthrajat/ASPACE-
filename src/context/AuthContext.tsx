@@ -58,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             try {
+                setLoading(true);
                 setUser(currentUser);
                 if (currentUser) {
                     // Fetch or create user profile in Firestore
@@ -132,8 +133,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();
         try {
+            setLoading(true);
             await signInWithPopup(auth, provider);
         } catch (error) {
+            setLoading(false);
             console.error("Error signing in with Google", error);
             throw error;
         }
@@ -141,8 +144,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const loginWithEmail = async (email: string, pass: string) => {
         try {
+            setLoading(true);
             await signInWithEmailAndPassword(auth, email, pass);
         } catch (error) {
+            setLoading(false);
             console.error("Error logging in with email", error);
             throw error;
         }
@@ -150,8 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const signupWithEmail = async (email: string, pass: string) => {
         try {
+            setLoading(true);
             await createUserWithEmailAndPassword(auth, email, pass);
         } catch (error) {
+            setLoading(false);
             console.error("Error signing up with email", error);
             throw error;
         }
@@ -159,8 +166,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const signOut = async () => {
         try {
+            setLoading(true);
             await firebaseSignOut(auth);
         } catch (error) {
+            setLoading(false);
             console.error("Error signing out", error);
             throw error;
         }
