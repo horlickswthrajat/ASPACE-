@@ -404,7 +404,16 @@ export default function DashboardPage() {
                 )}
 
                 {/* Main View Area */}
-                {activeTab === 'Home' && <HomeView containerVariants={containerVariants} itemVariants={itemVariants} />}
+                {activeTab === 'Home' && (
+                    <HomeView
+                        containerVariants={containerVariants}
+                        itemVariants={itemVariants}
+                        onArtistClick={(id) => {
+                            setSelectedArtistId(id);
+                            setActiveTab('PublicProfile');
+                        }}
+                    />
+                )}
                 {activeTab === 'Search' && (
                     <SearchView
                         containerVariants={containerVariants}
