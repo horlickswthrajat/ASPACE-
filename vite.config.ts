@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon-192.png', 'icon-512.png', 'vite.svg'],
       manifest: {
         name: 'Art Space',

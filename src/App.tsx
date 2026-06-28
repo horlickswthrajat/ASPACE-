@@ -50,6 +50,7 @@ import SplashScreen from './components/SplashScreen';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { Analytics } from '@vercel/analytics/react';
+import PWAReloadPrompt from './components/PWAReloadPrompt';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -142,6 +143,9 @@ function AppContent() {
 
         {/* Overlay Content */}
         {!showSplash && <AnimatedRoutes />}
+
+        {/* PWA Update Prompt */}
+        {!showSplash && <PWAReloadPrompt />}
       </div>
     </ErrorBoundary>
   );
