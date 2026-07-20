@@ -22,6 +22,18 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     className={`${className} transition-transform duration-500 hover:rotate-12`}
                 >
                     <defs>
+                        <style>{`
+                            @keyframes prism-soft-pulse {
+                                0%, 100% { opacity: 0.9; }
+                                50% { opacity: 0.65; }
+                            }
+                            .animate-prism-pulse-fast {
+                                animation: prism-soft-pulse 2.5s infinite ease-in-out;
+                            }
+                            .animate-prism-pulse-slow {
+                                animation: prism-soft-pulse 3.5s infinite ease-in-out;
+                            }
+                        `}</style>
                         <linearGradient id="prism-grad1" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
                             <stop offset="0%" stopColor="#fcaab8" />
                             <stop offset="50%" stopColor="#f7f1e3" />
@@ -51,14 +63,14 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                             d="M20 32.5 L50 50 L50 85 L20 67.5 Z"
                             fill="url(#prism-grad2)"
                             opacity="0.75"
-                            className={animated ? "animate-[pulse_2.5s_infinite_ease-in-out]" : ""}
+                            className={animated ? "animate-prism-pulse-fast" : ""}
                         />
                         {/* Right Face */}
                         <path
                             d="M50 50 L80 32.5 L80 67.5 L50 85 Z"
                             fill="url(#prism-grad1)"
                             opacity="0.9"
-                            className={animated ? "animate-[pulse_3.5s_infinite_ease-in-out]" : ""}
+                            className={animated ? "animate-prism-pulse-slow" : ""}
                         />
                         {/* Core Glowing Orb */}
                         <circle
@@ -148,6 +160,15 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     className={`${className} transition-all duration-500 hover:rotate-180`}
                 >
                     <defs>
+                        <style>{`
+                            @keyframes spark-soft-pulse {
+                                0%, 100% { opacity: 1.0; }
+                                50% { opacity: 0.65; }
+                            }
+                            .animate-spark-pulse {
+                                animation: spark-soft-pulse 2s infinite ease-in-out;
+                            }
+                        `}</style>
                         <linearGradient id="spark-grad" x1="10" y1="10" x2="90" y2="90">
                             <stop offset="0%" stopColor="#ff00ff" />
                             <stop offset="50%" stopColor="#fcaab8" />
@@ -158,7 +179,7 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     <path
                         d="M50 10 C65 35 90 50 90 50 C90 50 65 65 50 90 C35 65 10 50 10 50 C10 50 35 35 50 10 Z"
                         fill="url(#spark-grad)"
-                        className={animated ? "animate-[pulse_2s_infinite_ease-in-out]" : ""}
+                        className={animated ? "animate-spark-pulse" : ""}
                     />
                     <path
                         d="M50 25 C58 40 75 50 75 50 C75 50 58 60 50 75 C42 60 25 50 25 50 C25 50 42 40 50 25 Z"
@@ -182,6 +203,15 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     className={`${className} transition-transform duration-500 hover:-translate-y-1`}
                 >
                     <defs>
+                        <style>{`
+                            @keyframes frame-soft-pulse {
+                                0%, 100% { opacity: 1.0; }
+                                50% { opacity: 0.65; }
+                            }
+                            .animate-frame-pulse {
+                                animation: frame-soft-pulse 3s infinite ease-in-out;
+                            }
+                        `}</style>
                         <linearGradient id="frame-grad" x1="0" y1="0" x2="100" y2="100">
                             <stop offset="0%" stopColor="#ffd1a3" />
                             <stop offset="100%" stopColor="#00ffff" />
@@ -196,7 +226,7 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                         rx="6"
                         stroke="url(#frame-grad)"
                         strokeWidth="6"
-                        className={animated ? "animate-[pulse_3s_infinite]" : ""}
+                        className={animated ? "animate-frame-pulse" : ""}
                     />
                     {/* Inner offset circle */}
                     <circle
@@ -235,6 +265,15 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     className={`${className} transition-all duration-500 hover:scale-105`}
                 >
                     <defs>
+                        <style>{`
+                            @keyframes portal-soft-pulse {
+                                0%, 100% { opacity: 1.0; }
+                                50% { opacity: 0.6; }
+                            }
+                            .animate-portal-pulse {
+                                animation: portal-soft-pulse 2.3s infinite ease-in-out;
+                            }
+                        `}</style>
                         <radialGradient id="portal-grad" cx="50%" cy="50%" r="50%">
                             <stop offset="0%" stopColor="#ffffff" />
                             <stop offset="70%" stopColor="#fcaab8" />
@@ -248,7 +287,7 @@ export default function Logo({ id = 'prism', className = '', size = 48, animated
                     <circle cx="50" cy="50" r="15" stroke="#ff00ff" strokeWidth="2" opacity="0.9" />
 
                     {/* Glowing Center */}
-                    <circle cx="50" cy="50" r="10" fill="url(#portal-grad)" className={animated ? "animate-pulse" : ""} />
+                    <circle cx="50" cy="50" r="10" fill="url(#portal-grad)" className={animated ? "animate-portal-pulse" : ""} />
 
                     {/* Structural Crosshairs */}
                     <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" strokeWidth="1" opacity="0.4" strokeDasharray="4 4" />

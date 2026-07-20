@@ -126,7 +126,7 @@ export default function ProfileSetupPage() {
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2), 0 0 40px rgba(0, 0, 0, 0.1)'
                 }}
             >
-                <div className="text-center mb-8 relative z-10 flex flex-col items-center gap-3 animate-pulse">
+                <div className="text-center mb-8 relative z-10 flex flex-col items-center gap-3">
                     <Logo id={logoId} size={64} animated={true} />
                     <h2 className="text-3xl font-bold tracking-tight" style={{ color: theme.text }}>Create Your Profile</h2>
                     <p className="font-medium" style={{ color: theme.text, opacity: 0.7 }}>Customize how others see you in ArtSpace.</p>
