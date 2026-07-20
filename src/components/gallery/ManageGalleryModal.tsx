@@ -568,6 +568,18 @@ export default function ManageGalleryModal({ isOpen, onClose, roomId }: ManageGa
                                             <h5 className="font-bold text-sm">Upload Custom Audio Guide</h5>
                                             <p className="text-xs opacity-60 font-medium">{roomData?.audioGuideTitle || 'No custom audio file uploaded.'}</p>
                                         </div>
+                                        {roomData?.audioGuideTitle && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    await handleUpdateRoomSetting('ambientAudio', '');
+                                                    await handleUpdateRoomSetting('audioGuideTitle', null);
+                                                }}
+                                                className="px-4 py-2.5 rounded-full font-bold text-xs shadow-sm transition-transform hover:scale-105 active:scale-95 text-red-500 border border-red-200 hover:bg-red-50 cursor-pointer"
+                                            >
+                                                Delete Audio
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             disabled={uploadingAudio}
