@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
@@ -147,9 +147,7 @@ export default function GalleryPage() {
     const [newGuestbookMessage, setNewGuestbookMessage] = useState('');
     const [submittingGuestbook, setSubmittingGuestbook] = useState(false);
 
-    // Audio Playback
-    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-    const audioRef = useRef<HTMLAudioElement | null>(null);
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -213,29 +211,7 @@ export default function GalleryPage() {
         fetchRoomData();
     }, [roomId, user]);
 
-    // Manage Background Music instantiation
-    useEffect(() => {
-        if (room?.ambientAudio) {
-            if (!audioRef.current) {
-                audioRef.current = new Audio(room.ambientAudio);
-                audioRef.current.loop = true;
-                audioRef.current.volume = 0.5;
-            } else {
-                audioRef.current.src = room.ambientAudio;
-            }
-        } else {
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current = null;
-                setIsPlayingAudio(false);
-            }
-        }
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
-    }, [room?.ambientAudio]);
+
 
     // Live Guestbook syncing
     useEffect(() => {
@@ -256,19 +232,7 @@ export default function GalleryPage() {
         return () => unsub();
     }, [roomId, isGuestbookOpen]);
 
-    const togglePlayAudio = () => {
-        if (!audioRef.current) return;
-        if (isPlayingAudio) {
-            audioRef.current.pause();
-            setIsPlayingAudio(false);
-        } else {
-            audioRef.current.play().then(() => {
-                setIsPlayingAudio(true);
-            }).catch(err => {
-                console.warn("Audio play blocked:", err);
-            });
-        }
-    };
+
 
     const handleSignGuestbook = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -385,24 +349,7 @@ export default function GalleryPage() {
                         <ArrowLeft size={24} />
                     </button>
 
-                    {/* Audio control button */}
-                    {room?.ambientAudio && (
-                        <button
-                            onClick={togglePlayAudio}
-                            className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full backdrop-blur-md transition-transform hover:scale-110 shadow-lg border-2 z-20 cursor-pointer"
-                            style={{ backgroundColor: `${theme.surface}99`, color: theme.text, borderColor: theme.border }}
-                            title={isPlayingAudio ? "Mute Background Music" : "Play Background Music"}
-                        >
-                            {isPlayingAudio ? (
-                                <span className="relative flex h-4 w-4 items-center justify-center">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fcaab8] opacity-75"></span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#fcaab8]"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                                </span>
-                            ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-                            )}
-                        </button>
-                    )}
+                    {/* No Audio control button as music features are disabled */}
                 </div>
 
                 {room && (
@@ -489,11 +436,6 @@ export default function GalleryPage() {
                                 id="explore-button"
                                 onClick={() => {
                                     setExploreMode(true);
-                                    if (audioRef.current) {
-                                        audioRef.current.play().then(() => {
-                                            setIsPlayingAudio(true);
-                                        }).catch(e => console.warn(e));
-                                    }
                                 }}
                                 className="pointer-events-auto border-4 px-10 py-4 md:px-12 md:py-5 rounded-full font-black text-xl md:text-2xl shadow-[0_10px_40px_rgba(252,170,184,0.3)] transition-all hover:scale-105 hover:brightness-110 flex items-center gap-3 cursor-pointer"
                                 style={{
