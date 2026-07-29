@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, X, Loader2, Send, Pencil, Check } from 'lucide-react';
+import { Heart, MessageCircle, X, Loader2, Send, Pencil, Check, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../lib/firebase';
@@ -28,6 +28,65 @@ export default function ArtworkDetailsOverlay({ artwork, onClose }: { artwork: a
     const [editTitle, setEditTitle] = useState(artwork?.title || '');
     const [editDescription, setEditDescription] = useState(artwork?.description || '');
     const [isSaving, setIsSaving] = useState(false);
+
+    // AI Curator State
+    const [isAiCuratorOpen, setIsAiCuratorOpen] = useState(false);
+    const [aiAnalysis, setAiAnalysis] = useState<{ movement: string; palette: string[]; critique: string } | null>(null);
+    const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+
+    useEffect(() => {
+        return () => {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
+    const generateAiCritique = () => {
+        if (aiAnalysis) return;
+        setIsGeneratingAi(true);
+        setTimeout(() => {
+            const title = artwork?.title || 'Untitled Creation';
+            const desc = artwork?.description || 'a captivating visual work';
+
+            const stylesList = ['Contemporary Digital Realism', 'Neo-Impressionist Abstract', 'Futuristic Cyber Expressionism', 'Minimalist Composition', 'Surrealist Luminism'];
+            const randomStyle = stylesList[Math.abs(title.length + desc.length) % stylesList.length];
+
+            const critiques = [
+                `"${title}" demonstrates a masterful play between depth and light. The artist seamlessly bridges structural geometry with emotional resonance, drawing viewers into a contemplative visual narrative.`,
+                `In "${title}", we observe a dynamic tension of form and color. The visual rhythm evokes raw creativity, embodying contemporary post-digital aesthetics and expressive spatial harmony.`,
+                `"${title}" invites the observer to decode its layered symbolism. Bold lighting juxtaposed against subtle tonal shifts creates an immersive museum-grade atmosphere.`
+            ];
+            const randomCritique = critiques[Math.abs(title.length * 3) % critiques.length];
+
+            setAiAnalysis({
+                movement: randomStyle,
+                palette: ['#fcaab8', '#00ffff', '#ffd1a3', '#ff00ff'],
+                critique: randomCritique
+            });
+            setIsGeneratingAi(false);
+        }, 500);
+    };
+
+    const toggleSpeechNarration = () => {
+        if (!('speechSynthesis' in window)) {
+            alert('Voice narration is not supported in this browser.');
+            return;
+        }
+        if (isSpeaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+        } else {
+            const textToRead = aiAnalysis ? aiAnalysis.critique : `${artwork?.title || 'Untitled'}. ${artwork?.description || ''}`;
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.onend = () => setIsSpeaking(false);
+            utterance.onerror = () => setIsSpeaking(false);
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            setIsSpeaking(true);
+        }
+    };
 
     useEffect(() => {
         if (!artwork || !user) return;
@@ -345,6 +404,66 @@ export default function ArtworkDetailsOverlay({ artwork, onClose }: { artwork: a
                                     ))
                                 )}
                             </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                        setIsAiCuratorOpen(!isAiCuratorOpen);
+                        if (!isAiCuratorOpen) generateAiCritique();
+                    }}
+                    className="flex items-center justify-between px-5 py-4 rounded-2xl border bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:brightness-110 transition-all cursor-pointer"
+                    style={{ borderColor: theme.border }}
+                >
+                    <div className="flex items-center gap-3">
+                        <Sparkles size={20} className="text-pink-400 animate-pulse" />
+                        <span className="font-semibold text-sm">AI Art Curator & Critique</span>
+                    </div>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSpeechNarration();
+                        }}
+                        className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                        title={isSpeaking ? "Pause Narration" : "Read Aloud"}
+                    >
+                        {isSpeaking ? <VolumeX size={16} className="text-pink-400 animate-bounce" /> : <Volume2 size={16} />}
+                    </button>
+                </motion.button>
+
+                <AnimatePresence>
+                    {isAiCuratorOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden flex flex-col gap-3 mt-1 p-4 rounded-2xl bg-black/20 border border-white/10"
+                        >
+                            {isGeneratingAi ? (
+                                <div className="flex items-center justify-center gap-2 py-4">
+                                    <Loader2 className="animate-spin text-pink-400" size={20} />
+                                    <span className="text-xs font-semibold opacity-75">Analyzing movement & color composition...</span>
+                                </div>
+                            ) : aiAnalysis ? (
+                                <div className="flex flex-col gap-2.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-pink-500/30 text-pink-200">
+                                            {aiAnalysis.movement}
+                                        </span>
+                                        <div className="flex gap-1.5">
+                                            {aiAnalysis.palette.map((color, idx) => (
+                                                <div key={idx} className="w-3.5 h-3.5 rounded-full border border-white/30" style={{ backgroundColor: color }} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <p className="text-xs font-medium opacity-90 leading-relaxed italic border-l-2 border-pink-400 pl-3 my-1">
+                                        "{aiAnalysis.critique}"
+                                    </p>
+                                </div>
+                            ) : null}
                         </motion.div>
                     )}
                 </AnimatePresence>

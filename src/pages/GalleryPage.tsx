@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Canvas, useThree } from '@react-three/fiber';
 import { useProgress, Html } from '@react-three/drei';
-import { ArrowLeft, Loader2, Star, Info, Settings2, X, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, Star, Info, Settings2, X, Trash2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Sun, PenTool, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { useAppContext } from '../context/AppContext';
@@ -141,11 +141,54 @@ export default function GalleryPage() {
         right: false
     });
 
-    // Guestbook State
-    const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
-    const [guestbookEntries, setGuestbookEntries] = useState<any[]>([]);
-    const [newGuestbookMessage, setNewGuestbookMessage] = useState('');
-    const [submittingGuestbook, setSubmittingGuestbook] = useState(false);
+    // Atmosphere & Lighting State
+    const [atmosphere, setAtmosphere] = useState<'default' | 'golden_hour' | 'sunset' | 'midnight' | 'foggy'>('default');
+
+    // Guestbook Sketchpad State
+    const [guestbookTab, setGuestbookTab] = useState<'note' | 'sketch'>('note');
+    const [sketchColor, setSketchColor] = useState('#5c4033');
+    const [isDrawing, setIsDrawing] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    const startDrawing = (e: any) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        setIsDrawing(true);
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        ctx.beginPath();
+        ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    };
+
+    const draw = (e: any) => {
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        ctx.lineTo(clientX - rect.left, clientY - rect.top);
+        ctx.strokeStyle = sketchColor;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    };
+
+    const stopDrawing = () => {
+        setIsDrawing(false);
+    };
+
+    const clearCanvas = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
 
 
 
@@ -213,6 +256,12 @@ export default function GalleryPage() {
 
 
 
+    // Guestbook State
+    const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
+    const [guestbookEntries, setGuestbookEntries] = useState<any[]>([]);
+    const [newGuestbookMessage, setNewGuestbookMessage] = useState('');
+    const [submittingGuestbook, setSubmittingGuestbook] = useState(false);
+
     // Live Guestbook syncing
     useEffect(() => {
         if (!roomId || !isGuestbookOpen) return;
@@ -236,7 +285,13 @@ export default function GalleryPage() {
 
     const handleSignGuestbook = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user || !roomId || !newGuestbookMessage.trim() || submittingGuestbook) return;
+        if (!user || !roomId || submittingGuestbook) return;
+        let sketchUrl: string | null = null;
+        if (guestbookTab === 'sketch' && canvasRef.current) {
+            sketchUrl = canvasRef.current.toDataURL('image/png');
+        }
+        if (!newGuestbookMessage.trim() && !sketchUrl) return;
+
         setSubmittingGuestbook(true);
         try {
             await addDoc(collection(db, 'guestbook'), {
@@ -244,10 +299,12 @@ export default function GalleryPage() {
                 userId: user.uid,
                 authorName: user.displayName || 'Anonymous',
                 authorPhoto: user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`,
-                message: newGuestbookMessage.trim(),
+                message: newGuestbookMessage.trim() || (sketchUrl ? 'Left a digital sketch' : ''),
+                sketchUrl,
                 createdAt: serverTimestamp()
             });
             setNewGuestbookMessage('');
+            clearCanvas();
         } catch (err) {
             console.error(err);
             alert("Failed to sign guestbook.");
@@ -349,7 +406,25 @@ export default function GalleryPage() {
                         <ArrowLeft size={24} />
                     </button>
 
-                    {/* No Audio control button as music features are disabled */}
+                    {/* Atmosphere Lighting Switcher Pill */}
+                    <div className="pointer-events-auto flex items-center gap-1 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/20 shadow-lg hidden sm:flex">
+                        <Sun size={14} className="text-amber-300 ml-2 mr-1" />
+                        {[
+                            { id: 'default', label: 'Day' },
+                            { id: 'golden_hour', label: 'Golden' },
+                            { id: 'sunset', label: 'Sunset' },
+                            { id: 'midnight', label: 'Midnight' },
+                            { id: 'foggy', label: 'Foggy' }
+                        ].map((atmo) => (
+                            <button
+                                key={atmo.id}
+                                onClick={() => setAtmosphere(atmo.id as any)}
+                                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${atmosphere === atmo.id ? 'bg-white text-black shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
+                            >
+                                {atmo.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {room && (
@@ -585,6 +660,11 @@ export default function GalleryPage() {
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-gray-700 leading-relaxed font-serif italic">"{entry.message}"</p>
+                                                {entry.sketchUrl && (
+                                                    <div className="mt-2 p-2 bg-white rounded-xl border border-gray-200 shadow-sm max-w-[200px]">
+                                                        <img src={entry.sketchUrl} alt="Visitor Sketch" className="w-full h-auto rounded-lg object-contain bg-[#fffdfa]" />
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {user && (user.uid === entry.userId || user.uid === room?.userId) && (
@@ -602,19 +682,78 @@ export default function GalleryPage() {
                             </div>
 
                             {user ? (
-                                <form onSubmit={handleSignGuestbook} className="flex flex-col gap-3 font-sans border-t border-dashed border-[#c4a46a] pt-4">
-                                    <textarea
-                                        value={newGuestbookMessage}
-                                        onChange={(e) => setNewGuestbookMessage(e.target.value)}
-                                        placeholder="Write your note here..."
-                                        maxLength={250}
-                                        rows={2}
-                                        required
-                                        className="w-full bg-white/70 border border-[#ebdcb9] focus:border-[#c4a46a] rounded-2xl py-3 px-4 outline-none resize-none font-serif italic text-base transition-all focus:bg-white"
-                                    />
+                                <form onSubmit={handleSignGuestbook} className="flex flex-col gap-3 font-sans border-t border-dashed border-[#c4a46a] pt-3">
+                                    <div className="flex gap-2 mb-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setGuestbookTab('note')}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${guestbookTab === 'note' ? 'bg-[#5c4033] text-white' : 'bg-white/60 text-[#5c4033]'}`}
+                                        >
+                                            Text Note
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setGuestbookTab('sketch')}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${guestbookTab === 'sketch' ? 'bg-[#5c4033] text-white' : 'bg-white/60 text-[#5c4033]'}`}
+                                        >
+                                            <PenTool size={12} />
+                                            Draw Sketch
+                                        </button>
+                                    </div>
+
+                                    {guestbookTab === 'note' ? (
+                                        <textarea
+                                            value={newGuestbookMessage}
+                                            onChange={(e) => setNewGuestbookMessage(e.target.value)}
+                                            placeholder="Write your note here..."
+                                            maxLength={250}
+                                            rows={2}
+                                            required
+                                            className="w-full bg-white/70 border border-[#ebdcb9] focus:border-[#c4a46a] rounded-2xl py-3 px-4 outline-none resize-none font-serif italic text-base transition-all focus:bg-white"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col gap-2 bg-white/80 p-3 rounded-2xl border border-[#ebdcb9]">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs font-bold text-[#5c4033]">Draw your signature artwork:</span>
+                                                <div className="flex items-center gap-2">
+                                                    {['#5c4033', '#d9534f', '#0275d8', '#5cb85c', '#f0ad4e', '#292b2c'].map(color => (
+                                                        <button
+                                                            key={color}
+                                                            type="button"
+                                                            onClick={() => setSketchColor(color)}
+                                                            className={`w-5 h-5 rounded-full border transition-transform cursor-pointer ${sketchColor === color ? 'scale-125 border-black shadow' : 'border-white'}`}
+                                                            style={{ backgroundColor: color }}
+                                                        />
+                                                    ))}
+                                                    <button
+                                                        type="button"
+                                                        onClick={clearCanvas}
+                                                        className="p-1 text-gray-500 hover:text-red-500 cursor-pointer ml-1"
+                                                        title="Clear Sketch"
+                                                    >
+                                                        <RotateCcw size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <canvas
+                                                ref={canvasRef}
+                                                width={320}
+                                                height={140}
+                                                onMouseDown={startDrawing}
+                                                onMouseMove={draw}
+                                                onMouseUp={stopDrawing}
+                                                onMouseLeave={stopDrawing}
+                                                onTouchStart={startDrawing}
+                                                onTouchMove={draw}
+                                                onTouchEnd={stopDrawing}
+                                                className="w-full h-32 bg-[#fffdfa] rounded-xl border border-dashed border-[#c4a46a] cursor-crosshair touch-none"
+                                            />
+                                        </div>
+                                    )}
+
                                     <button
                                         type="submit"
-                                        disabled={submittingGuestbook || !newGuestbookMessage.trim()}
+                                        disabled={submittingGuestbook || (guestbookTab === 'note' && !newGuestbookMessage.trim())}
                                         className="w-full py-3.5 rounded-full font-bold text-sm tracking-wide text-white transition-all transform hover:scale-[1.01] active:scale-95 disabled:opacity-50 cursor-pointer"
                                         style={{ backgroundColor: '#5c4033' }}
                                     >
@@ -644,6 +783,7 @@ export default function GalleryPage() {
                         <GalleryEnvironment
                             artworks={artworks}
                             roomType={room?.roomType || 'atrium'}
+                            atmosphere={atmosphere}
                             enableGuestbook={room?.enableGuestbook || false}
                             onGuestbookClick={() => {
                                 setExploreMode(false);

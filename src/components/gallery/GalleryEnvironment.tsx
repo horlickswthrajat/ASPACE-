@@ -226,7 +226,8 @@ export default function GalleryEnvironment({
     roomType = 'atrium',
     enableGuestbook = false,
     onGuestbookClick,
-    mobileMovement
+    mobileMovement,
+    atmosphere = 'default'
 }: {
     artworks: Artwork[],
     onArtworkClick: (art: Artwork) => void;
@@ -238,6 +239,7 @@ export default function GalleryEnvironment({
     enableGuestbook?: boolean;
     onGuestbookClick?: () => void;
     mobileMovement?: { forward: boolean; backward: boolean; left: boolean; right: boolean; };
+    atmosphere?: 'default' | 'golden_hour' | 'sunset' | 'midnight' | 'foggy';
 }) {
     const roomLength = 30; // Longer room for depth
     const roomWidth = 20;
@@ -323,20 +325,32 @@ export default function GalleryEnvironment({
     };
 
     const currentStyle = styles[roomType as keyof typeof styles] || styles.atrium;
+
+    const atmosphereConfigs = {
+        default: { fogColor: null, fogNear: 15, fogFar: 45, lightColor: currentStyle.directionalColor, intensityMult: 1 },
+        golden_hour: { fogColor: '#3a200a', fogNear: 8, fogFar: 35, lightColor: '#ffa726', intensityMult: 1.4 },
+        sunset: { fogColor: '#2b0a2c', fogNear: 6, fogFar: 30, lightColor: '#ff4081', intensityMult: 1.3 },
+        midnight: { fogColor: '#020617', fogNear: 5, fogFar: 28, lightColor: '#00ffff', intensityMult: 0.8 },
+        foggy: { fogColor: '#b0bec5', fogNear: 3, fogFar: 22, lightColor: '#e0e0e0', intensityMult: 0.7 }
+    };
+    const atmo = atmosphereConfigs[atmosphere] || atmosphereConfigs.default;
+
     const wallMaterialProps = currentStyle.useWallTexture
         ? { map: wallTexture, color: currentStyle.wallColor, roughness: currentStyle.wallRoughness }
         : { color: currentStyle.wallColor, roughness: currentStyle.wallRoughness };
 
     return (
         <group>
+            {atmo.fogColor && <fog attach="fog" args={[atmo.fogColor, atmo.fogNear, atmo.fogFar]} />}
+
             {/* Ambient Lighting */}
-            <ambientLight intensity={currentStyle.ambientIntensity * 0.5} color={currentStyle.ambientColor} />
+            <ambientLight intensity={currentStyle.ambientIntensity * 0.5 * atmo.intensityMult} color={atmo.lightColor || currentStyle.ambientColor} />
 
             {/* Main directional light coming from the window */}
             <directionalLight
                 position={[0, 10, -roomLength / 2 - 10]}
-                intensity={currentStyle.directionalIntensity * 0.4}
-                color={currentStyle.directionalColor}
+                intensity={currentStyle.directionalIntensity * 0.4 * atmo.intensityMult}
+                color={atmo.lightColor || currentStyle.directionalColor}
                 castShadow={!isMobileDevice}
                 shadow-mapSize={isMobileDevice ? [512, 512] : [1024, 1024]}
                 shadow-camera-top={20}
